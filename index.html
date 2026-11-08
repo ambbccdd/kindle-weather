@@ -16,7 +16,7 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 10px 12px 6px;
+      padding: 8px 12px 4px;
     }
     /* 頂部雙欄並排區塊 */
     .top-section {
@@ -29,69 +29,69 @@
       width: 48%;
       vertical-align: middle;
       border-right: 2px solid #000000;
-      padding-right: 8px;
+      padding-right: 6px;
     }
     .top-right {
       width: 52%;
       vertical-align: middle;
-      padding-left: 12px;
+      padding-left: 10px;
     }
     .time {
-      font-size: 96px;
+      font-size: 68px;
       font-weight: bold;
       line-height: 0.95;
       letter-spacing: -2px;
       margin-bottom: 2px;
     }
     .date {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: bold;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
     .current {
-      font-size: 80px;
+      font-size: 72px;
       font-weight: bold;
       line-height: 0.95;
       letter-spacing: -2px;
     }
     .cond-title {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: bold;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
     .meta-line {
-      font-size: 14px;
-      margin-bottom: 3px;
+      font-size: 13px;
+      margin-bottom: 2px;
       color: #111111;
     }
     .tips-box {
       display: inline-block;
       border: 1px solid #000000;
-      padding: 3px 6px;
-      font-size: 12px;
+      padding: 2px 6px;
+      font-size: 11px;
       font-weight: bold;
       border-radius: 3px;
-      margin-top: 4px;
+      margin-top: 3px;
       line-height: 1.2;
     }
     hr {
       border: 0;
       border-top: 2px solid #000000;
-      margin: 8px auto 6px;
+      margin: 6px auto 4px;
       width: 98%;
     }
     /* 6 小時逐時天氣表格 */
     .hourly-title {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
       text-align: left;
       width: 98%;
-      margin: 0 auto 3px;
+      margin: 0 auto 2px;
       letter-spacing: 1px;
     }
     .hourly-table {
       width: 98%;
-      margin: 0 auto 5px;
+      margin: 0 auto 4px;
       border-collapse: collapse;
       border-top: 1px solid #000000;
       border-bottom: 1px solid #000000;
@@ -99,9 +99,9 @@
     .hourly-table td {
       width: 16.6%;
       text-align: center;
-      padding: 4px 1px;
+      padding: 3px 1px;
       border-right: 1px solid #e0e0e0;
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1.15;
       vertical-align: top;
     }
@@ -109,26 +109,26 @@
       border-right: none;
     }
     .h-time { font-weight: bold; }
-    .h-temp { font-weight: bold; font-size: 13px; }
-    .h-pop { font-size: 11px; color: #222222; }
+    .h-temp { font-weight: bold; font-size: 12px; }
+    .h-pop { font-size: 10px; color: #222222; }
 
     /* 7 天預報列表 */
     .forecast-title {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
       text-align: left;
       width: 98%;
-      margin: 4px auto 2px;
+      margin: 3px auto 2px;
       letter-spacing: 1px;
     }
     .forecast-table {
       width: 98%;
       margin: 0 auto;
       border-collapse: collapse;
-      font-size: 13px;
+      font-size: 12px;
     }
     .forecast-table td {
-      padding: 3px 2px;
+      padding: 2px 2px;
       border-bottom: 1px solid #dcdcdc;
       line-height: 1.2;
     }
@@ -136,6 +136,19 @@
     .col-cond { text-align: center; width: 26%; }
     .col-pop { text-align: center; width: 20%; color: #222222; }
     .col-temp { text-align: right; width: 26%; }
+
+    /* 每日正面話語區塊 */
+    .quote-box {
+      width: 98%;
+      margin: 5px auto 0;
+      padding-top: 4px;
+      border-top: 1px dashed #000000;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      line-height: 1.3;
+      color: #111111;
+    }
   </style>
   <meta http-equiv="refresh" content="1800">
 </head>
@@ -149,7 +162,7 @@
         <div class="current" id="temp">--°C</div>
       </td>
       <td class="top-right">
-        <div class="cond-title" id="cond">新北中和 · 連線中</div>
+        <div class="cond-title" id="cond">中和 · 連線中</div>
         <div class="meta-line" id="meta-pop">降雨機率：--%</div>
         <div class="meta-line" id="meta-aqi">空氣品質：讀取中...</div>
         <div class="tips-box" id="tips">穿衣建議：載入中...</div>
@@ -162,7 +175,7 @@
   <div class="hourly-title">未來 6 小時氣象</div>
   <table class="hourly-table" id="hourly-table">
     <tbody>
-      <tr><td colspan="6" style="padding:6px;">逐時預報載入中...</td></tr>
+      <tr><td colspan="6" style="padding:4px;">逐時預報載入中...</td></tr>
     </tbody>
   </table>
 
@@ -173,7 +186,52 @@
     </tbody>
   </table>
 
+  <!-- 每日正面小語 -->
+  <div class="quote-box" id="daily-quote">✨ 讀取今日心靈小語...</div>
+
   <script>
+    // 每日正面語庫（共 31 句，依日期自動輪播）
+    var quotes = [
+      "「每一個平凡的日子，都值得全力以赴。」",
+      "「今天也是充滿無限可能的一天，加油！」",
+      "「保持熱愛，奔赴山海，慢慢來也是一種快。」",
+      "「心若向陽，無畏悲傷；步履不停，終有收穫。」",
+      "「做自己的太陽，無需憑藉誰的光。」",
+      "「專注於當下的一小步，路就會在腳下延伸。」",
+      "「每天都是全新的畫布，盡情繪上精彩色彩。」",
+      "「溫柔對待生活，生活也會對你報以微笑。」",
+      "「生活不必非得完美，但可以充滿期待。」",
+      "「累積小小的進步，終將迎來大大的奇蹟。」",
+      "「保持好心情，好事正排隊向你走來。」",
+      "「你遠比自己想像的更堅強、更有力量。」",
+      "「無論外在天氣如何，內心都要晴空萬里。」",
+      "「把期待降低，把生活過得熱氣騰騰。」",
+      "「今天請記得好好愛自己，放慢腳步喝杯水。」",
+      "「每個起心動念的努力，都在默默紮根。」",
+      "「生活最好的狀態：未來可期，當下不負。」",
+      "「不慌不忙，安靜生長，做最踏實的自己。」",
+      "「風雨過後必定天晴，前方總有驚喜在等待。」",
+      "「用善意與平靜擁抱今天的一切相遇。」",
+      "「今天給自己一個微笑，世界也會為你亮起來。」",
+      "「享受過程中的每一個瞬間，美好都在細節裡。」",
+      "「跨出舒適圈的一小步，就是成長的開始。」",
+      "「相信自己正在正確的節奏上前進。」",
+      "「不盲目與他人比較，專注於今天的自我超越。」",
+      "「把煩惱留給昨天，今天又是充滿希望的開始。」",
+      "「心懷感恩，所見皆是溫暖與風景。」",
+      "「做你熱愛的事，時間會給出最好的答案。」",
+      "「休息是為了走更長遠的路，今天也要張弛有度。」",
+      "「願你今天收穫滿滿的陽光與安心。」",
+      "「堅定步伐，未來的所有美好都在向你奔來。」"
+    ];
+
+    // 更新每日一句（依年月日換算）
+    function updateDailyQuote(twDate) {
+      var seed = twDate.getFullYear() * 10000 + (twDate.getMonth() + 1) * 100 + twDate.getDate();
+      var index = seed % quotes.length;
+      document.getElementById('daily-quote').innerHTML = '✨ ' + quotes[index];
+    }
+
     // 1. 本地時鐘（自動每分鐘推進）
     var lastMinute = -1;
 
@@ -194,6 +252,7 @@
 
         document.getElementById('clock').innerHTML = hStr + ':' + mStr;
         document.getElementById('date').innerHTML = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
+        updateDailyQuote(d);
       }
     }
 
@@ -354,7 +413,7 @@
               var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
 
               rows += '<tr>' +
-                        '<td class="col-day">' + dayText + ' <span style="font-size:11px;color:#555;">' + dateText + '</span></td>' +
+                        '<td class="col-day">' + dayText + ' <span style="font-size:10px;color:#555;">' + dateText + '</span></td>' +
                         '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
                         '<td class="col-pop">☂ ' + pop + '%</td>' +
                         '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
