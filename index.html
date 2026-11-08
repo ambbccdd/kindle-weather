@@ -164,6 +164,7 @@
   <meta http-equiv="refresh" content="1800">
 </head>
 <body>
+  <!-- 頂部雙欄並排區塊 -->
   <table class="top-section">
     <tr>
       <td class="top-left">
@@ -362,6 +363,12 @@
       return '危害 (' + aqi + ')';
     }
 
+    // 將零散機率四捨五入到 10% 為單位（<5% 歸為 0%）
+    function formatPop(val) {
+      if (val === undefined || val === null || val < 5) return 0;
+      return Math.round(val / 10) * 10;
+    }
+
     function getClothingTip(temp, pop, aqi) {
       var tip = '';
       if (temp >= 28) {
@@ -391,7 +398,7 @@
     var lat = 24.998;
     var lon = 121.503;
 
-    // 強制指定 Asia/Taipei 時區（避免跨時區偏差）
+    // 強制指定 Asia/Taipei 時區
     var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi&timezone=Asia%2FTaipei';
     var weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
       '&current=temperature_2m,weather_code' +
@@ -448,7 +455,7 @@
             var currentTargetPrefix = y + '-' + pad(m) + '-' + pad(d) + 'T' + pad(h);
             var todayDateStr = y + '-' + pad(m) + '-' + pad(d);
 
-            // 2. 精確找出目前小時在 hourly 陣列中的位置
+            // 2. 精確找出目前整點在 hourly 中的位置
             var startIndex = -1;
             for (var k = 0; k < hourly.time.length; k++) {
               if (hourly.time[k].indexOf(currentTargetPrefix) === 0) {
@@ -460,9 +467,10 @@
               startIndex = 0;
             }
 
-            // 3. 取得當前的即時降雨機率（以當前整點預估為主）
-            var currentPop = (hourly.precipitation_probability && hourly.precipitation_probability[startIndex] !== undefined)
-                             ? hourly.precipitation_probability[startIndex] : 0;
+            // 3. 取得當前整點的降雨機率（整數化）
+            var rawCurrentPop = (hourly.precipitation_probability && hourly.precipitation_probability[startIndex] !== undefined)
+                                ? hourly.precipitation_probability[startIndex] : 0;
+            var currentPop = formatPop(rawCurrentPop);
 
             document.getElementById('temp').innerHTML = curTemp + '°C';
             document.getElementById('cond').innerHTML = '中和 · ' + getDesc(curCode);
@@ -478,8 +486,9 @@
                 var timeStr = hourly.time[targetIdx].substring(11, 16);
                 var hCode = hourly.weather_code[targetIdx];
                 var hTemp = Math.round(hourly.temperature_2m[targetIdx]);
-                var hPop = (hourly.precipitation_probability && hourly.precipitation_probability[targetIdx] !== undefined)
-                           ? hourly.precipitation_probability[targetIdx] : 0;
+                var rawHPop = (hourly.precipitation_probability && hourly.precipitation_probability[targetIdx] !== undefined)
+                              ? hourly.precipitation_probability[targetIdx] : 0;
+                var hPop = formatPop(rawHPop);
 
                 hourlyCells += '<td>' +
                   '<div class="h-time">' + timeStr + '</div>' +
@@ -495,7 +504,6 @@
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             var rows = '';
 
-            // 找到今天在 daily 中的起點
             var dailyStart = 0;
             for (var dIdx = 0; dIdx < daily.time.length; dIdx++) {
               if (daily.time[dIdx] === todayDateStr) {
@@ -513,8 +521,9 @@
                 var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
                 var maxT = Math.round(daily.temperature_2m_max[actualDayIdx]);
                 var minT = Math.round(daily.temperature_2m_min[actualDayIdx]);
-                var pop = (daily.precipitation_probability_max && daily.precipitation_probability_max[actualDayIdx] !== undefined)
-                          ? daily.precipitation_probability_max[actualDayIdx] : 0;
+                var rawDayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[actualDayIdx] !== undefined)
+                                ? daily.precipitation_probability_max[actualDayIdx] : 0;
+                var pop = formatPop(rawDayPop);
 
                 rows += '<tr>' +
                           '<td class="col-day">' + dayText + ' <span style="font-size:15px;color:#333;font-weight:bold;">' + dateText + '</span></td>' +
