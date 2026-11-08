@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kindle Weather</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: none; /* 增強電子墨水屏文字銳利度 */
+    }
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 12vh 20px 0;
+    }
+    .time {
+      font-size: 5rem;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .date {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 35px;
+    }
+    .divider {
+      width: 60%;
+      height: 2px;
+      background-color: #000000;
+      margin: 0 auto 35px;
+    }
+    .temp {
+      font-size: 5.5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .condition {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .details {
+      font-size: 1.2rem;
+      color: #333333;
+    }
+  </style>
+  <!-- 每 30 分鐘自動重整頁面抓取新天氣 -->
+  <meta http-equiv="refresh" content="1800">
+</head>
+<body>
+  <div class="time" id="clock">--:--</div>
+  <div class="date" id="date">載入中...</div>
+  <div class="divider"></div>
+  <div class="temp" id="temp">--°C</div>
+  <div class="condition" id="condition">讀取天氣中...</div>
+  <div class="details" id="details"></div>
+
+  <script>
+    // 1. 本地時鐘
+    function updateClock() {
+      var now = new Date();
+      var days = ['日', '一', '二', '三', '四', '五', '六'];
+      var h = String(now.getHours()).padStart(2, '0');
+      var m = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').innerText = h + ':' + m;
+      document.getElementById('date').innerText = (now.getMonth() + 1) + '月' + now.getDate() + '日 星期' + days[now.getDay()];
+    }
+    updateClock();
+    setInterval(updateClock, 60000);
+
+    // 2. 取得天氣 (預設台北市座標：25.0375, 121.5625)
+    // 若需更換地點，至 Google Maps 取得經緯度替換 latitude 與 longitude 即可
+    var lat = 25.0375;
+    var lon = 121.5625;
+    var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&timezone=auto';
+
+    fetch(apiUrl)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        var cur = data.current;
+        document.getElementById('temp').innerText = Math.round(cur.temperature_2m) + '°C';
+
+        // WMO 天氣代碼轉換
+        var code = cur.weather_code;
+        var desc = '晴朗';
+        if (code === 1 || code === 2 || code === 3) desc = '多雲 / 陰天';
+        else if (code === 45 || code === 48) desc = '有霧';
+        else if (code >= 51 && code <= 67) desc = '降雨';
+        else if (code >= 71 && code <= 77) desc = '降雪';
+        else if (code >= 80 && code <= 82) desc = '陣雨';
+        else if (code >= 95) desc = '雷陣雨';
+
+        document.getElementById('condition').innerText = desc;
+        document.getElementById('details').innerText = '體感 ' + Math.round(cur.apparent_temperature) + '°C ｜ 濕度 ' + cur.relative_humidity_2m + '%';
+      })
+      .catch(function(err) {
+        document.getElementById('condition').innerText = '天氣載入失敗';
+      });
+  </script>
+</body>
+</html>
