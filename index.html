@@ -16,115 +16,81 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 16px 10px 4px;
+      padding: 16px 12px 6px;
     }
-    /* 頂部雙欄並排區塊 */
-    .top-section {
-      width: 98%;
+
+    /* 置中時間與即時天氣區塊 */
+    .hero-section {
+      width: 100%;
       margin: 0 auto;
-      border-collapse: collapse;
-      text-align: left;
+      text-align: center;
     }
-    .top-left {
-      width: 48%;
-      vertical-align: middle;
-      border-right: 2px solid #000000;
-      padding-right: 6px;
-    }
-    .top-right {
-      width: 52%;
-      vertical-align: middle;
-      padding-left: 10px;
-    }
-    .time {
-      font-size: 80px;
+    .hero-time {
+      font-size: 96px;
       font-weight: bold;
       line-height: 0.95;
       letter-spacing: -2px;
-      margin-bottom: 2px;
+      margin: 0 auto 4px;
     }
-    .date {
+    .hero-date {
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .hero-temp-row {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .hero-temp {
+      font-size: 88px;
+      font-weight: bold;
+      line-height: 0.95;
+      letter-spacing: -2px;
+    }
+    .hero-cond {
+      font-size: 26px;
+      font-weight: bold;
+    }
+    .hero-meta {
       font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 3px;
-    }
-    .current {
-      font-size: 82px;
-      font-weight: bold;
-      line-height: 0.95;
-      letter-spacing: -2px;
-    }
-    .cond-title {
-      font-size: 22px;
-      font-weight: bold;
-      margin-bottom: 3px;
-    }
-    .meta-line {
-      font-size: 15px;
-      margin-bottom: 2px;
-      color: #111111;
       font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
     }
     .tips-box {
       display: inline-block;
       border: 1px solid #000000;
-      padding: 3px 6px;
-      font-size: 13px;
+      padding: 4px 12px;
+      font-size: 14px;
       font-weight: bold;
-      border-radius: 3px;
-      margin-top: 3px;
-      line-height: 1.2;
+      border-radius: 4px;
+      margin-top: 2px;
+      line-height: 1.25;
     }
+
     hr {
       border: 0;
       border-top: 2px solid #000000;
-      margin: 6px auto 4px;
+      margin: 12px auto 8px;
       width: 98%;
     }
-    /* 6 小時逐時天氣表格 */
-    .hourly-title {
-      font-size: 13px;
-      font-weight: bold;
-      text-align: left;
-      width: 98%;
-      margin: 0 auto 2px;
-      letter-spacing: 0.5px;
-    }
-    .hourly-table {
-      width: 98%;
-      margin: 0 auto 4px;
-      border-collapse: collapse;
-      border-top: 1px solid #000000;
-      border-bottom: 1px solid #000000;
-    }
-    .hourly-table td {
-      width: 16.6%;
-      text-align: center;
-      padding: 2px 1px;
-      border-right: 1px solid #e0e0e0;
-      font-size: 14px;
-      line-height: 1.15;
-      vertical-align: top;
-    }
-    .hourly-table td:last-child {
-      border-right: none;
-    }
-    .h-time { font-weight: bold; }
-    .h-temp { font-weight: bold; font-size: 15px; }
-    .h-pop { font-size: 12px; color: #111111; font-weight: 600; }
 
-    /* 未來一週折線圖容器 */
+    /* 未來一週折線圖容器（空間加大） */
     .chart-header {
       width: 98%;
-      margin: 4px auto 2px;
-      font-size: 13px;
+      margin: 0 auto 4px;
+      font-size: 15px;
       font-weight: bold;
       text-align: left;
       display: flex;
       justify-content: space-between;
     }
     .chart-legend {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: normal;
     }
     .chart-container {
@@ -132,7 +98,7 @@
       margin: 0 auto;
       border: 1px solid #000000;
       border-radius: 4px;
-      padding: 4px 0 2px;
+      padding: 6px 0 4px;
       background: #ffffff;
     }
     svg text {
@@ -140,56 +106,52 @@
       user-select: none;
     }
 
-    /* 每日正面話語區塊（無虛線、留白間距） */
+    /* 每日正面話語區塊（留白置中） */
     .quote-box {
       width: 98%;
-      margin: 12px auto 0;
-      padding-top: 6px;
+      margin: 14px auto 0;
+      padding-top: 4px;
       border-top: none;
-      font-size: 17px;
+      font-size: 18px;
       font-weight: bold;
       letter-spacing: 0.5px;
-      line-height: 1.3;
+      line-height: 1.35;
       color: #000000;
     }
   </style>
   <meta http-equiv="refresh" content="1800">
 </head>
 <body>
-  <table class="top-section">
-    <tr>
-      <td class="top-left">
-        <div class="time" id="clock">--:--</div>
-        <div class="date" id="date">載入中...</div>
-        <div class="current" id="temp">--°C</div>
-      </td>
-      <td class="top-right">
-        <div class="cond-title" id="cond">中和 · 連線中</div>
-        <div class="meta-line" id="meta-pop">降雨機率：--%</div>
-        <div class="meta-line" id="meta-aqi">空氣品質：讀取中...</div>
-        <div class="tips-box" id="tips">穿衣建議：載入中...</div>
-      </td>
-    </tr>
-  </table>
+  <!-- 置中頂部核心資訊 -->
+  <div class="hero-section">
+    <div class="hero-time" id="clock">--:--</div>
+    <div class="hero-date" id="date">載入中...</div>
+    <div class="hero-temp-row">
+      <span class="hero-temp" id="temp">--°C</span>
+      <span class="hero-cond" id="cond">中和 · 連線中</span>
+    </div>
+    <div class="hero-meta">
+      <span id="meta-pop">降雨機率：--%</span>
+      <span style="margin: 0 8px;">·</span>
+      <span id="meta-aqi">空氣品質：讀取中...</span>
+    </div>
+    <div>
+      <div class="tips-box" id="tips">穿衣建議：載入中...</div>
+    </div>
+  </div>
 
   <hr>
 
-  <div class="hourly-title">未來 6 小時氣象</div>
-  <table class="hourly-table" id="hourly-table">
-    <tbody>
-      <tr><td colspan="6" style="padding:4px;">逐時預報載入中...</td></tr>
-    </tbody>
-  </table>
-
-  <!-- 未來 7 天折線圖區域 -->
+  <!-- 未來 7 天氣溫趨勢線圖 -->
   <div class="chart-header">
     <span>未來 7 天氣溫趨勢</span>
     <span class="chart-legend">── 高溫  ┄┄ 低溫</span>
   </div>
   <div class="chart-container" id="chart-wrap">
-    <div style="font-size:13px;padding:20px;">生成線圖中...</div>
+    <div style="font-size:14px;padding:30px;">生成線圖中...</div>
   </div>
 
+  <!-- 每日正面小語 -->
   <div class="quote-box" id="daily-quote">讀取今日心靈小語...</div>
 
   <script>
@@ -392,7 +354,7 @@
     var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi&timezone=Asia%2FTaipei';
     var weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
       '&current=temperature_2m,weather_code' +
-      '&hourly=temperature_2m,weather_code,precipitation_probability' +
+      '&hourly=temperature_2m,precipitation_probability' +
       '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
       '&timezone=Asia%2FTaipei';
 
@@ -418,10 +380,10 @@
     xhrAqi.ontimeout = function() { loadWeather(); };
     xhrAqi.send();
 
-    // 純 SVG 動態折線圖（已刪除直線、放大日期與降雨機率）
+    // 純 SVG 動態折線圖（適應更大縱向空間）
     function renderWeatherChart(daysData) {
       var w = 560;
-      var h = 180;
+      var h = 210; // 空間放大
       var n = daysData.length;
       var colW = w / n;
 
@@ -434,8 +396,8 @@
       var minT = Math.min.apply(null, allTemps);
       if (maxT === minT) { maxT += 2; minT -= 2; }
 
-      var chartTop = 48;
-      var chartBottom = 125;
+      var chartTop = 50;
+      var chartBottom = 145;
       var range = chartBottom - chartTop;
 
       function getY(t) {
@@ -455,21 +417,21 @@
         maxPoints.push(x + ',' + yMax);
         minPoints.push(x + ',' + yMin);
 
-        // 頂部星期與加大後的日期 (13px, #222)
-        labelsSvg += '<text x="' + x + '" y="16" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">' + item.day + '</text>';
-        labelsSvg += '<text x="' + x + '" y="31" text-anchor="middle" font-size="13" font-weight="bold" fill="#222">' + item.date + '</text>';
+        // 頂部星期與加大日期
+        labelsSvg += '<text x="' + x + '" y="17" text-anchor="middle" font-size="15" font-weight="bold" fill="#000">' + item.day + '</text>';
+        labelsSvg += '<text x="' + x + '" y="33" text-anchor="middle" font-size="13" font-weight="bold" fill="#222">' + item.date + '</text>';
 
         // 高溫標註點與度數
-        labelsSvg += '<circle cx="' + x + '" cy="' + yMax + '" r="3.5" fill="#000" />';
-        labelsSvg += '<text x="' + x + '" y="' + (yMax - 6) + '" text-anchor="middle" font-size="13" font-weight="bold" fill="#000">' + item.max + '°</text>';
+        labelsSvg += '<circle cx="' + x + '" cy="' + yMax + '" r="4" fill="#000" />';
+        labelsSvg += '<text x="' + x + '" y="' + (yMax - 7) + '" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">' + item.max + '°</text>';
 
         // 低溫標註點與度數
-        labelsSvg += '<circle cx="' + x + '" cy="' + yMin + '" r="3" fill="#fff" stroke="#000" stroke-width="2" />';
-        labelsSvg += '<text x="' + x + '" y="' + (yMin + 15) + '" text-anchor="middle" font-size="13" font-weight="bold" fill="#000">' + item.min + '°</text>';
+        labelsSvg += '<circle cx="' + x + '" cy="' + yMin + '" r="3.5" fill="#fff" stroke="#000" stroke-width="2" />';
+        labelsSvg += '<text x="' + x + '" y="' + (yMin + 16) + '" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">' + item.min + '°</text>';
 
-        // 底部天氣現象與加大後的降雨機率 (14px, 粗體)
-        labelsSvg += '<text x="' + x + '" y="151" text-anchor="middle" font-size="13" fill="#000">' + item.cond + '</text>';
-        labelsSvg += '<text x="' + x + '" y="170" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">☂ ' + item.pop + '%</text>';
+        // 底部天氣現象與大字降雨機率
+        labelsSvg += '<text x="' + x + '" y="174" text-anchor="middle" font-size="14" fill="#000">' + item.cond + '</text>';
+        labelsSvg += '<text x="' + x + '" y="195" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">☂ ' + item.pop + '%</text>';
       }
 
       var svgHtml = '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block;">' +
@@ -526,29 +488,7 @@
             document.getElementById('meta-aqi').innerHTML = '空氣品質：' + aqiText;
             document.getElementById('tips').innerHTML = '建議：' + getClothingTip(curTemp, currentPop, currentAqi);
 
-            // A. 未來 6 小時逐時預報
-            var hourlyCells = '';
-            for (var i = 0; i < 6; i++) {
-              var targetIdx = startIndex + i;
-              if (targetIdx < hourly.time.length) {
-                var timeStr = hourly.time[targetIdx].substring(11, 16);
-                var hCode = hourly.weather_code[targetIdx];
-                var hTemp = Math.round(hourly.temperature_2m[targetIdx]);
-                var rawHPop = (hourly.precipitation_probability && hourly.precipitation_probability[targetIdx] !== undefined)
-                              ? hourly.precipitation_probability[targetIdx] : 0;
-                var hPop = formatPop(rawHPop);
-
-                hourlyCells += '<td>' +
-                  '<div class="h-time">' + timeStr + '</div>' +
-                  '<div>' + getDesc(hCode) + '</div>' +
-                  '<div class="h-temp">' + hTemp + '°</div>' +
-                  '<div class="h-pop">☂ ' + hPop + '%</div>' +
-                '</td>';
-              }
-            }
-            document.getElementById('hourly-table').innerHTML = '<tbody><tr>' + hourlyCells + '</tr></tbody>';
-
-            // B. 未來 7 天折線圖
+            // 整理未來 7 天資料並繪製折線圖
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             var chartList = [];
 
