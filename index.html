@@ -418,6 +418,7 @@
     xhrAqi.ontimeout = function() { loadWeather(); };
     xhrAqi.send();
 
+    // 純 SVG 動態折線圖（已刪除直線、放大日期與降雨機率）
     function renderWeatherChart(daysData) {
       var w = 560;
       var h = 180;
@@ -454,19 +455,21 @@
         maxPoints.push(x + ',' + yMax);
         minPoints.push(x + ',' + yMin);
 
+        // 頂部星期與加大後的日期 (13px, #222)
         labelsSvg += '<text x="' + x + '" y="16" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">' + item.day + '</text>';
-        labelsSvg += '<text x="' + x + '" y="30" text-anchor="middle" font-size="11" fill="#444">' + item.date + '</text>';
+        labelsSvg += '<text x="' + x + '" y="31" text-anchor="middle" font-size="13" font-weight="bold" fill="#222">' + item.date + '</text>';
 
+        // 高溫標註點與度數
         labelsSvg += '<circle cx="' + x + '" cy="' + yMax + '" r="3.5" fill="#000" />';
         labelsSvg += '<text x="' + x + '" y="' + (yMax - 6) + '" text-anchor="middle" font-size="13" font-weight="bold" fill="#000">' + item.max + '°</text>';
 
+        // 低溫標註點與度數
         labelsSvg += '<circle cx="' + x + '" cy="' + yMin + '" r="3" fill="#fff" stroke="#000" stroke-width="2" />';
         labelsSvg += '<text x="' + x + '" y="' + (yMin + 15) + '" text-anchor="middle" font-size="13" font-weight="bold" fill="#000">' + item.min + '°</text>';
 
-        labelsSvg += '<text x="' + x + '" y="152" text-anchor="middle" font-size="13" fill="#000">' + item.cond + '</text>';
-        labelsSvg += '<text x="' + x + '" y="170" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">☂ ' + item.pop + '%</text>';
-
-        labelsSvg += '<line x1="' + x + '" y1="36" x2="' + x + '" y2="135" stroke="#efefef" stroke-width="1" />';
+        // 底部天氣現象與加大後的降雨機率 (14px, 粗體)
+        labelsSvg += '<text x="' + x + '" y="151" text-anchor="middle" font-size="13" fill="#000">' + item.cond + '</text>';
+        labelsSvg += '<text x="' + x + '" y="170" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">☂ ' + item.pop + '%</text>';
       }
 
       var svgHtml = '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block;">' +
