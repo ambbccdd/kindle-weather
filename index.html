@@ -16,7 +16,7 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 8px 12px 4px;
+      padding: 10px 12px 6px;
     }
     /* 頂部雙欄並排區塊 */
     .top-section {
@@ -29,69 +29,69 @@
       width: 48%;
       vertical-align: middle;
       border-right: 2px solid #000000;
-      padding-right: 6px;
+      padding-right: 8px;
     }
     .top-right {
       width: 52%;
       vertical-align: middle;
-      padding-left: 10px;
+      padding-left: 12px;
     }
     .time {
-      font-size: 68px;
+      font-size: 82px;
       font-weight: bold;
       line-height: 0.95;
       letter-spacing: -2px;
-      margin-bottom: 2px;
-    }
-    .date {
-      font-size: 14px;
-      font-weight: bold;
       margin-bottom: 3px;
     }
+    .date {
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
     .current {
-      font-size: 72px;
+      font-size: 84px;
       font-weight: bold;
       line-height: 0.95;
       letter-spacing: -2px;
     }
     .cond-title {
-      font-size: 19px;
+      font-size: 21px;
       font-weight: bold;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
     .meta-line {
-      font-size: 13px;
-      margin-bottom: 2px;
+      font-size: 14px;
+      margin-bottom: 3px;
       color: #111111;
     }
     .tips-box {
       display: inline-block;
       border: 1px solid #000000;
-      padding: 2px 6px;
-      font-size: 11px;
+      padding: 3px 8px;
+      font-size: 12px;
       font-weight: bold;
       border-radius: 3px;
-      margin-top: 3px;
-      line-height: 1.2;
+      margin-top: 4px;
+      line-height: 1.25;
     }
     hr {
       border: 0;
       border-top: 2px solid #000000;
-      margin: 6px auto 4px;
+      margin: 8px auto 6px;
       width: 98%;
     }
     /* 6 小時逐時天氣表格 */
     .hourly-title {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: bold;
       text-align: left;
       width: 98%;
-      margin: 0 auto 2px;
+      margin: 0 auto 3px;
       letter-spacing: 1px;
     }
     .hourly-table {
       width: 98%;
-      margin: 0 auto 4px;
+      margin: 0 auto 5px;
       border-collapse: collapse;
       border-top: 1px solid #000000;
       border-bottom: 1px solid #000000;
@@ -99,9 +99,9 @@
     .hourly-table td {
       width: 16.6%;
       text-align: center;
-      padding: 3px 1px;
+      padding: 4px 1px;
       border-right: 1px solid #e0e0e0;
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.15;
       vertical-align: top;
     }
@@ -109,26 +109,26 @@
       border-right: none;
     }
     .h-time { font-weight: bold; }
-    .h-temp { font-weight: bold; font-size: 12px; }
-    .h-pop { font-size: 10px; color: #222222; }
+    .h-temp { font-weight: bold; font-size: 13px; }
+    .h-pop { font-size: 11px; color: #222222; }
 
     /* 7 天預報列表 */
     .forecast-title {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: bold;
       text-align: left;
       width: 98%;
-      margin: 3px auto 2px;
+      margin: 4px auto 2px;
       letter-spacing: 1px;
     }
     .forecast-table {
       width: 98%;
       margin: 0 auto;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 13px;
     }
     .forecast-table td {
-      padding: 2px 2px;
+      padding: 3px 2px;
       border-bottom: 1px solid #dcdcdc;
       line-height: 1.2;
     }
@@ -137,17 +137,17 @@
     .col-pop { text-align: center; width: 20%; color: #222222; }
     .col-temp { text-align: right; width: 26%; }
 
-    /* 每日正面話語區塊 */
+    /* 每日正面話語區塊（放大字體與留白） */
     .quote-box {
       width: 98%;
-      margin: 5px auto 0;
-      padding-top: 4px;
+      margin: 8px auto 0;
+      padding-top: 6px;
       border-top: 1px dashed #000000;
-      font-size: 12px;
+      font-size: 15px;
       font-weight: bold;
       letter-spacing: 0.5px;
-      line-height: 1.3;
-      color: #111111;
+      line-height: 1.35;
+      color: #000000;
     }
   </style>
   <meta http-equiv="refresh" content="1800">
@@ -186,7 +186,7 @@
     </tbody>
   </table>
 
-  <!-- 每日正面小語 -->
+  <!-- 每日正面小語（15px 大字） -->
   <div class="quote-box" id="daily-quote">✨ 讀取今日心靈小語...</div>
 
   <script>
@@ -225,7 +225,6 @@
       "「堅定步伐，未來的所有美好都在向你奔來。」"
     ];
 
-    // 更新每日一句（依年月日換算）
     function updateDailyQuote(twDate) {
       var seed = twDate.getFullYear() * 10000 + (twDate.getMonth() + 1) * 100 + twDate.getDate();
       var index = seed % quotes.length;
@@ -413,7 +412,7 @@
               var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
 
               rows += '<tr>' +
-                        '<td class="col-day">' + dayText + ' <span style="font-size:10px;color:#555;">' + dateText + '</span></td>' +
+                        '<td class="col-day">' + dayText + ' <span style="font-size:11px;color:#555;">' + dateText + '</span></td>' +
                         '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
                         '<td class="col-pop">☂ ' + pop + '%</td>' +
                         '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
