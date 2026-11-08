@@ -7,37 +7,37 @@
   <style>
     * { box-sizing: border-box; }
     body {
-      background: #fff;
-      color: #000;
+      background-color: #ffffff;
+      color: #000000;
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 24px 16px;
+      padding: 20px 14px;
     }
     .time {
-      font-size: 58px;
+      font-size: 54px;
       font-weight: bold;
       line-height: 1;
       margin-bottom: 6px;
     }
     .date {
       font-size: 18px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .current {
-      font-size: 50px;
+      font-size: 52px;
       font-weight: bold;
       line-height: 1;
       margin-bottom: 6px;
     }
     .desc {
       font-size: 20px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
     hr {
       border: 0;
-      border-top: 2px solid #000;
-      margin: 18px auto;
+      border-top: 2px solid #000000;
+      margin: 14px auto;
       width: 95%;
     }
     table {
@@ -47,12 +47,12 @@
       font-size: 16px;
     }
     td {
-      padding: 7px 2px;
-      border-bottom: 1px solid #ccc;
+      padding: 6px 2px;
+      border-bottom: 1px solid #cccccc;
     }
-    .col-day { text-align: left; width: 30%; font-weight: bold; }
-    .col-cond { text-align: center; width: 35%; }
-    .col-temp { text-align: right; width: 35%; }
+    .col-day { text-align: left; width: 32%; font-weight: bold; }
+    .col-cond { text-align: center; width: 34%; }
+    .col-temp { text-align: right; width: 34%; }
   </style>
   <meta http-equiv="refresh" content="1800">
 </head>
@@ -61,7 +61,7 @@
   <div class="date" id="date">載入中...</div>
 
   <div class="current" id="temp">--°C</div>
-  <div class="desc" id="cond">中和天氣讀取中...</div>
+  <div class="desc" id="cond">連線中...</div>
 
   <hr>
 
@@ -72,19 +72,83 @@
   </table>
 
   <script>
-    // 1. 時鐘更新
+    // 1. 本地時鐘（完全避開 ES6 語法）
     function setClock() {
       var d = new Date();
       var days = ['日', '一', '二', '三', '四', '五', '六'];
-      var h = (d.getHours() < 10 ? '0' : '') + d.getHours();
-      var m = (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
-      document.getElementById('clock').innerText = h + ':' + m;
-      document.getElementById('date').innerText = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
+      var h = d.getHours();
+      var m = d.getMinutes();
+      var hStr = (h < 10 ? '0' : '') + h;
+      var mStr = (m < 10 ? '0' : '') + m;
+      document.getElementById('clock').innerHTML = hStr + ':' + mStr;
+      document.getElementById('date').innerHTML = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
     }
     setClock();
 
-    // 2. 簡易代碼轉換
+    // 2. 天氣代碼轉換
     function getDesc(code) {
       if (code === 0) return '晴朗';
       if (code <= 3) return '多雲';
-      if
+      if (code >= 51 && code <= 67) return '降雨';
+      if (code >= 80 && code <= 82) return '短暫雨';
+      if (code >= 95) return '雷雨';
+      return '陰天';
+    }
+
+    // 3. 使用 Kindle 絕對支援的 XMLHttpRequest (XHR)
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=24.998&longitude=121.503&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.timeout = 10000; // 10 秒逾時
+
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var data = JSON.parse(xhr.responseText);
+          
+          // 當前天氣
+          var cur = data.current;
+          document.getElementById('temp').innerHTML = Math.round(cur.temperature_2m) + '°C';
+          document.getElementById('cond').innerHTML = '新北中和 · ' + getDesc(cur.weather_code);
+
+          // 7 天預報列表
+          var d = data.daily;
+          var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+          var rows = '';
+
+          for (var i = 0; i < d.time.length; i++) {
+            var parts = d.time[i].split('-');
+            var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            var dayText = (i === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
+            var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
+            var maxT = Math.round(d.temperature_2m_max[i]);
+            var minT = Math.round(d.temperature_2m_min[i]);
+
+            rows += '<tr>' +
+                      '<td class="col-day">' + dayText + ' <span style="font-size:12px;color:#555;">' + dateText + '</span></td>' +
+                      '<td class="col-cond">' + getDesc(d.weather_code[i]) + '</td>' +
+                      '<td class="col-temp">' + minT + '° ~ ' + maxT + '°C</td>' +
+                    '</tr>';
+          }
+          document.getElementById('forecast-table').innerHTML = '<tbody>' + rows + '</tbody>';
+        } catch (e) {
+          document.getElementById('cond').innerHTML = '資料解析失敗';
+        }
+      } else {
+        document.getElementById('cond').innerHTML = '伺服器回應異常 (' + xhr.status + ')';
+      }
+    };
+
+    xhr.onerror = function() {
+      document.getElementById('cond').innerHTML = '網路連線失敗';
+    };
+
+    xhr.ontimeout = function() {
+      document.getElementById('cond').innerHTML = '連線逾時，請重整';
+    };
+
+    xhr.send();
+  </script>
+</body>
+</html>
