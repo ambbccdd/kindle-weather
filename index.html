@@ -12,7 +12,7 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 18px 14px;
+      padding: 16px 12px;
     }
     .time {
       font-size: 96px;
@@ -23,7 +23,7 @@
     }
     .date {
       font-size: 18px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .current {
       font-size: 52px;
@@ -33,37 +33,37 @@
     }
     .desc {
       font-size: 20px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
-    /* 穿衣建議區塊：黑白框線設計，高對比易讀 */
     .tips-box {
       display: inline-block;
       border: 1px solid #000000;
-      padding: 6px 14px;
+      padding: 5px 12px;
       font-size: 15px;
       font-weight: bold;
       border-radius: 4px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     hr {
       border: 0;
       border-top: 2px solid #000000;
-      margin: 14px auto;
+      margin: 12px auto;
       width: 95%;
     }
     table {
       width: 95%;
       margin: 0 auto;
       border-collapse: collapse;
-      font-size: 16px;
+      font-size: 15px;
     }
     td {
       padding: 6px 2px;
       border-bottom: 1px solid #cccccc;
     }
-    .col-day { text-align: left; width: 32%; font-weight: bold; }
-    .col-cond { text-align: center; width: 34%; }
-    .col-temp { text-align: right; width: 34%; }
+    .col-day { text-align: left; width: 28%; font-weight: bold; }
+    .col-cond { text-align: center; width: 26%; }
+    .col-pop { text-align: center; width: 20%; color: #333333; }
+    .col-temp { text-align: right; width: 26%; }
   </style>
   <meta http-equiv="refresh" content="1800">
 </head>
@@ -79,7 +79,7 @@
 
   <table id="forecast-table">
     <tbody>
-      <tr><td colspan="3" style="text-align:center;">更新預報中...</td></tr>
+      <tr><td colspan="4" style="text-align:center;">更新預報中...</td></tr>
     </tbody>
   </table>
 
@@ -110,33 +110,36 @@
       return '陰天';
     }
 
-    // 3. 根據氣溫與天氣給出穿衣建議
-    function getClothingTip(temp, code) {
+    // 3. 根據氣溫與降雨機率給出穿搭建議
+    function getClothingTip(temp, pop) {
       var tip = '';
       if (temp >= 28) {
-        tip = '短袖、輕便涼爽衣物，注意防曬';
+        tip = '短袖、輕便涼爽衣物';
       } else if (temp >= 24) {
-        tip = '短袖或薄長袖，通風舒適為主';
+        tip = '短袖或薄長袖，通風舒適';
       } else if (temp >= 20) {
-        tip = '長袖襯衫、薄長褲，早晚加薄外套';
+        tip = '長袖襯衫、早晚搭薄外套';
       } else if (temp >= 16) {
         tip = '夾克外套、針織衫或風衣';
       } else if (temp >= 12) {
-        tip = '厚外套、毛衣、圍巾，注意保暖';
+        tip = '厚外套、毛衣，注意保暖';
       } else {
-        tip = '羽絨衣、發熱衣，嚴防低溫寒意';
+        tip = '羽絨衣、發熱衣，嚴防低溫';
       }
 
-      // 如果有下雨，追加帶傘提醒
-      if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95) {
-        tip += ' · 出門記得帶傘 ☂';
+      // 降雨機率大於等於 30% 即提醒帶傘
+      if (pop >= 30) {
+        tip += ' · 出門備傘 ☂';
       }
 
       return tip;
     }
 
-    // 4. 使用相容性最高的 XHR 抓取新北中和天氣
-    var url = 'https://api.open-meteo.com/v1/forecast?latitude=24.998&longitude=121.503&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto';
+    // 4. 加入 precipitation_probability_max 參數
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=24.998&longitude=121.503' +
+      '&current=temperature_2m,weather_code' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+      '&timezone=auto';
 
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
@@ -147,30 +150,35 @@
         try {
           var data = JSON.parse(xhr.responseText);
           var cur = data.current;
+          var daily = data.daily;
+
           var curTemp = Math.round(cur.temperature_2m);
           var curCode = cur.weather_code;
+          var todayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[0] !== undefined) 
+                         ? daily.precipitation_probability_max[0] : 0;
 
           document.getElementById('temp').innerHTML = curTemp + '°C';
-          document.getElementById('cond').innerHTML = '新北中和 · ' + getDesc(curCode);
-          document.getElementById('tips').innerHTML = '穿衣建議：' + getClothingTip(curTemp, curCode);
+          document.getElementById('cond').innerHTML = '新北中和 · ' + getDesc(curCode) + ' · 降雨機率 ' + todayPop + '%';
+          document.getElementById('tips').innerHTML = '穿衣建議：' + getClothingTip(curTemp, todayPop);
 
-          // 7 天預報列表
-          var d = data.daily;
+          // 7 天預報列表（含降雨機率欄）
           var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
           var rows = '';
 
-          for (var i = 0; i < d.time.length; i++) {
-            var parts = d.time[i].split('-');
+          for (var i = 0; i < daily.time.length; i++) {
+            var parts = daily.time[i].split('-');
             var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
             var dayText = (i === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
             var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
-            var maxT = Math.round(d.temperature_2m_max[i]);
-            var minT = Math.round(d.temperature_2m_min[i]);
+            var maxT = Math.round(daily.temperature_2m_max[i]);
+            var minT = Math.round(daily.temperature_2m_min[i]);
+            var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
 
             rows += '<tr>' +
                       '<td class="col-day">' + dayText + ' <span style="font-size:12px;color:#555;">' + dateText + '</span></td>' +
-                      '<td class="col-cond">' + getDesc(d.weather_code[i]) + '</td>' +
-                      '<td class="col-temp">' + minT + '° ~ ' + maxT + '°C</td>' +
+                      '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
+                      '<td class="col-pop">☂ ' + pop + '%</td>' +
+                      '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
                     '</tr>';
           }
           document.getElementById('forecast-table').innerHTML = '<tbody>' + rows + '</tbody>';
