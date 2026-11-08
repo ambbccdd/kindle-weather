@@ -12,18 +12,18 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 16px 12px;
+      padding: 14px 10px;
     }
     .time {
       font-size: 96px;
       font-weight: bold;
       line-height: 1;
       letter-spacing: -2px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .date {
       font-size: 18px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .current {
       font-size: 52px;
@@ -32,22 +32,27 @@
       margin-bottom: 6px;
     }
     .desc {
-      font-size: 20px;
+      font-size: 19px;
+      margin-bottom: 6px;
+    }
+    .sub-info {
+      font-size: 15px;
+      color: #222222;
       margin-bottom: 10px;
     }
     .tips-box {
       display: inline-block;
       border: 1px solid #000000;
       padding: 5px 12px;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: bold;
       border-radius: 4px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     hr {
       border: 0;
       border-top: 2px solid #000000;
-      margin: 12px auto;
+      margin: 10px auto;
       width: 95%;
     }
     table {
@@ -57,7 +62,7 @@
       font-size: 15px;
     }
     td {
-      padding: 6px 2px;
+      padding: 5px 2px;
       border-bottom: 1px solid #cccccc;
     }
     .col-day { text-align: left; width: 28%; font-weight: bold; }
@@ -73,6 +78,7 @@
 
   <div class="current" id="temp">--°C</div>
   <div class="desc" id="cond">連線中...</div>
+  <div class="sub-info" id="sub-info">降雨機率 --% ｜ 空氣品質 讀取中...</div>
   <div class="tips-box" id="tips">穿衣建議：載入中...</div>
 
   <hr>
@@ -110,8 +116,17 @@
       return '陰天';
     }
 
-    // 3. 根據氣溫與降雨機率給出穿搭建議
-    function getClothingTip(temp, pop) {
+    // 3. 空氣品質 AQI 分級與標籤
+    function getAqiInfo(aqi, pm25) {
+      if (aqi <= 50) return '良好 (AQI ' + aqi + ')';
+      if (aqi <= 100) return '普通 (AQI ' + aqi + ')';
+      if (aqi <= 150) return '對敏感族群不健康 (AQI ' + aqi + ')';
+      if (aqi <= 200) return '對所有族群不健康 (AQI ' + aqi + ')';
+      return '非常不健康 (AQI ' + aqi + ')';
+    }
+
+    // 4. 穿衣與出門建議（結合氣溫、降雨與空品）
+    function getClothingTip(temp, pop, aqi) {
       var tip = '';
       if (temp >= 28) {
         tip = '短袖、輕便涼爽衣物';
@@ -127,78 +142,111 @@
         tip = '羽絨衣、發熱衣，嚴防低溫';
       }
 
-      // 降雨機率大於等於 30% 即提醒帶傘
       if (pop >= 30) {
         tip += ' · 出門備傘 ☂';
+      }
+      if (aqi > 100) {
+        tip += ' · 空品差戴口罩 😷';
       }
 
       return tip;
     }
 
-    // 4. 加入 precipitation_probability_max 參數
-    var url = 'https://api.open-meteo.com/v1/forecast?latitude=24.998&longitude=121.503' +
+    var lat = 24.998;
+    var lon = 121.503;
+
+    // 5. 抓取空氣品質 (Open-Meteo Air Quality API)
+    var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi,pm2_5&timezone=auto';
+    var weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
       '&current=temperature_2m,weather_code' +
       '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
       '&timezone=auto';
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.timeout = 10000;
+    var currentAqi = 0;
+    var aqiText = '讀取中...';
 
-    xhr.onload = function() {
-      if (xhr.status >= 200 && xhr.status < 300) {
+    var xhrAqi = new XMLHttpRequest();
+    xhrAqi.open('GET', aqiUrl, true);
+    xhrAqi.timeout = 8000;
+    xhrAqi.onload = function() {
+      if (xhrAqi.status >= 200 && xhrAqi.status < 300) {
         try {
-          var data = JSON.parse(xhr.responseText);
-          var cur = data.current;
-          var daily = data.daily;
-
-          var curTemp = Math.round(cur.temperature_2m);
-          var curCode = cur.weather_code;
-          var todayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[0] !== undefined) 
-                         ? daily.precipitation_probability_max[0] : 0;
-
-          document.getElementById('temp').innerHTML = curTemp + '°C';
-          document.getElementById('cond').innerHTML = '新北中和 · ' + getDesc(curCode) + ' · 降雨機率 ' + todayPop + '%';
-          document.getElementById('tips').innerHTML = '穿衣建議：' + getClothingTip(curTemp, todayPop);
-
-          // 7 天預報列表（含降雨機率欄）
-          var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-          var rows = '';
-
-          for (var i = 0; i < daily.time.length; i++) {
-            var parts = daily.time[i].split('-');
-            var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-            var dayText = (i === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
-            var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
-            var maxT = Math.round(daily.temperature_2m_max[i]);
-            var minT = Math.round(daily.temperature_2m_min[i]);
-            var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
-
-            rows += '<tr>' +
-                      '<td class="col-day">' + dayText + ' <span style="font-size:12px;color:#555;">' + dateText + '</span></td>' +
-                      '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
-                      '<td class="col-pop">☂ ' + pop + '%</td>' +
-                      '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
-                    '</tr>';
-          }
-          document.getElementById('forecast-table').innerHTML = '<tbody>' + rows + '</tbody>';
+          var aqiData = JSON.parse(xhrAqi.responseText);
+          currentAqi = Math.round(aqiData.current.us_aqi);
+          var pm25 = Math.round(aqiData.current.pm2_5);
+          aqiText = getAqiInfo(currentAqi, pm25);
         } catch (e) {
-          document.getElementById('cond').innerHTML = '資料解析失敗';
+          aqiText = '資料異常';
         }
-      } else {
-        document.getElementById('cond').innerHTML = '伺服器異常 (' + xhr.status + ')';
       }
+      loadWeather();
     };
+    xhrAqi.onerror = function() { loadWeather(); };
+    xhrAqi.ontimeout = function() { loadWeather(); };
+    xhrAqi.send();
 
-    xhr.onerror = function() {
-      document.getElementById('cond').innerHTML = '網路連線失敗';
-    };
+    // 6. 抓取天氣預報
+    function loadWeather() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', weatherUrl, true);
+      xhr.timeout = 10000;
 
-    xhr.ontimeout = function() {
-      document.getElementById('cond').innerHTML = '連線逾時，請重整';
-    };
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            var cur = data.current;
+            var daily = data.daily;
 
-    xhr.send();
+            var curTemp = Math.round(cur.temperature_2m);
+            var curCode = cur.weather_code;
+            var todayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[0] !== undefined)
+                           ? daily.precipitation_probability_max[0] : 0;
+
+            document.getElementById('temp').innerHTML = curTemp + '°C';
+            document.getElementById('cond').innerHTML = '新北中和 · ' + getDesc(curCode);
+            document.getElementById('sub-info').innerHTML = '降雨機率 ' + todayPop + '% ｜ 空氣 ' + aqiText;
+            document.getElementById('tips').innerHTML = '生活建議：' + getClothingTip(curTemp, todayPop, currentAqi);
+
+            // 7 天預報列表
+            var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+            var rows = '';
+
+            for (var i = 0; i < daily.time.length; i++) {
+              var parts = daily.time[i].split('-');
+              var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+              var dayText = (i === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
+              var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
+              var maxT = Math.round(daily.temperature_2m_max[i]);
+              var minT = Math.round(daily.temperature_2m_min[i]);
+              var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
+
+              rows += '<tr>' +
+                        '<td class="col-day">' + dayText + ' <span style="font-size:12px;color:#555;">' + dateText + '</span></td>' +
+                        '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
+                        '<td class="col-pop">☂ ' + pop + '%</td>' +
+                        '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
+                      '</tr>';
+            }
+            document.getElementById('forecast-table').innerHTML = '<tbody>' + rows + '</tbody>';
+          } catch (e) {
+            document.getElementById('cond').innerHTML = '資料解析失敗';
+          }
+        } else {
+          document.getElementById('cond').innerHTML = '伺服器異常 (' + xhr.status + ')';
+        }
+      };
+
+      xhr.onerror = function() {
+        document.getElementById('cond').innerHTML = '網路連線失敗';
+      };
+
+      xhr.ontimeout = function() {
+        document.getElementById('cond').innerHTML = '連線逾時，請重整';
+      };
+
+      xhr.send();
+    }
   </script>
 </body>
 </html>
