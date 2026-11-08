@@ -12,7 +12,7 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 14px 10px;
+      padding: 12px 10px;
     }
     .time {
       font-size: 96px;
@@ -23,14 +23,14 @@
     }
     .date {
       font-size: 18px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .current {
       font-size: 80px;
       font-weight: bold;
       line-height: 1;
-      letter-spacing:-2px;
-      margin-bottom: 8px;
+      letter-spacing: -2px;
+      margin-bottom: 6px;
     }
     .desc {
       font-size: 19px;
@@ -44,7 +44,7 @@
     .tips-box {
       display: inline-block;
       border: 1px solid #000000;
-      padding: 5px 12px;
+      padding: 4px 12px;
       font-size: 14px;
       font-weight: bold;
       border-radius: 4px;
@@ -56,13 +56,54 @@
       margin: 10px auto;
       width: 95%;
     }
-    table {
+    /* 6 小時逐時天氣表格：高對比水平分欄 */
+    .hourly-title {
+      font-size: 13px;
+      font-weight: bold;
+      text-align: left;
+      width: 95%;
+      margin: 0 auto 4px;
+      letter-spacing: 1px;
+    }
+    .hourly-table {
+      width: 95%;
+      margin: 0 auto 6px;
+      border-collapse: collapse;
+      border-top: 1px solid #000000;
+      border-bottom: 1px solid #000000;
+    }
+    .hourly-table td {
+      width: 16.6%;
+      text-align: center;
+      padding: 6px 1px;
+      border-right: 1px solid #e0e0e0;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    .hourly-table td:last-child {
+      border-right: none;
+    }
+    .h-time { font-weight: bold; margin-bottom: 2px; }
+    .h-cond { margin-bottom: 2px; }
+    .h-temp { font-weight: bold; font-size: 14px; }
+    .h-pop { font-size: 11px; color: #333333; margin-top: 2px; }
+
+    /* 7 天預報列表 */
+    .forecast-title {
+      font-size: 13px;
+      font-weight: bold;
+      text-align: left;
+      width: 95%;
+      margin: 8px auto 4px;
+      letter-spacing: 1px;
+    }
+    .forecast-table {
       width: 95%;
       margin: 0 auto;
       border-collapse: collapse;
-      font-size: 15px;
+      font-size: 14px;
     }
-    td {
+    .forecast-table td {
       padding: 5px 2px;
       border-bottom: 1px solid #cccccc;
     }
@@ -79,19 +120,27 @@
 
   <div class="current" id="temp">--°C</div>
   <div class="desc" id="cond">連線中...</div>
-  <div class="sub-info" id="sub-info">降雨機率 --% ｜ 空氣品質 讀取中...</div>
+  <div class="sub-info" id="sub-info">降雨機率 --% ｜ 空氣 讀取中...</div>
   <div class="tips-box" id="tips">穿衣建議：載入中...</div>
 
   <hr>
 
-  <table id="forecast-table">
+  <div class="hourly-title">未來 6 小時氣象</div>
+  <table class="hourly-table" id="hourly-table">
+    <tbody>
+      <tr><td colspan="6" style="padding:10px;">逐時預報載入中...</td></tr>
+    </tbody>
+  </table>
+
+  <div class="forecast-title">未來 7 天預報</div>
+  <table class="forecast-table" id="forecast-table">
     <tbody>
       <tr><td colspan="4" style="text-align:center;">更新預報中...</td></tr>
     </tbody>
   </table>
 
   <script>
-// 1. 本地時鐘（自動每分鐘推進，不需手動重新整理）
+    // 1. 本地時鐘（自動每分鐘推進，不需手動重整）
     var lastMinute = -1;
 
     function setClock() {
@@ -101,7 +150,6 @@
 
       var m = d.getMinutes();
 
-      // 只有在「分鐘改變」時才更新 DOM，避免墨水屏不必要耗電刷新
       if (m !== lastMinute) {
         lastMinute = m;
 
@@ -116,7 +164,6 @@
     }
 
     setClock();
-    // 每 10 秒偵測一次，分鐘變更時自動推進時鐘
     setInterval(setClock, 10000);
 
     // 2. 天氣代碼轉換
@@ -129,16 +176,16 @@
       return '陰天';
     }
 
-    // 3. 空氣品質 AQI 分級與標籤
-    function getAqiInfo(aqi, pm25) {
+    // 3. 空氣品質標籤
+    function getAqiInfo(aqi) {
       if (aqi <= 50) return '良好 (AQI ' + aqi + ')';
       if (aqi <= 100) return '普通 (AQI ' + aqi + ')';
-      if (aqi <= 150) return '對敏感族群不健康 (AQI ' + aqi + ')';
-      if (aqi <= 200) return '對所有族群不健康 (AQI ' + aqi + ')';
-      return '非常不健康 (AQI ' + aqi + ')';
+      if (aqi <= 150) return '敏感不健康 (AQI ' + aqi + ')';
+      if (aqi <= 200) return '不健康 (AQI ' + aqi + ')';
+      return '危害 (AQI ' + aqi + ')';
     }
 
-    // 4. 穿衣與出門建議（結合氣溫、降雨與空品）
+    // 4. 生活與穿衣建議
     function getClothingTip(temp, pop, aqi) {
       var tip = '';
       if (temp >= 28) {
@@ -168,10 +215,11 @@
     var lat = 24.998;
     var lon = 121.503;
 
-    // 5. 抓取空氣品質 (Open-Meteo Air Quality API)
-    var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi,pm2_5&timezone=auto';
+    // 5. 抓取空氣品質
+    var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi&timezone=auto';
     var weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
       '&current=temperature_2m,weather_code' +
+      '&hourly=temperature_2m,weather_code,precipitation_probability' +
       '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
       '&timezone=auto';
 
@@ -186,8 +234,7 @@
         try {
           var aqiData = JSON.parse(xhrAqi.responseText);
           currentAqi = Math.round(aqiData.current.us_aqi);
-          var pm25 = Math.round(aqiData.current.pm2_5);
-          aqiText = getAqiInfo(currentAqi, pm25);
+          aqiText = getAqiInfo(currentAqi);
         } catch (e) {
           aqiText = '資料異常';
         }
@@ -198,7 +245,7 @@
     xhrAqi.ontimeout = function() { loadWeather(); };
     xhrAqi.send();
 
-    // 6. 抓取天氣預報
+    // 6. 抓取天氣數據（含近 6 小時逐時與一週預報）
     function loadWeather() {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', weatherUrl, true);
@@ -209,6 +256,7 @@
           try {
             var data = JSON.parse(xhr.responseText);
             var cur = data.current;
+            var hourly = data.hourly;
             var daily = data.daily;
 
             var curTemp = Math.round(cur.temperature_2m);
@@ -221,7 +269,44 @@
             document.getElementById('sub-info').innerHTML = '降雨機率 ' + todayPop + '% ｜ 空氣 ' + aqiText;
             document.getElementById('tips').innerHTML = '生活建議：' + getClothingTip(curTemp, todayPop, currentAqi);
 
-            // 7 天預報列表
+            // A. 計算並生成未來 6 小時逐時預報
+            var now = new Date();
+            var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            var twNow = new Date(utc + (3600000 * 8));
+            var currentHour = twNow.getHours();
+
+            // 尋找符合當前小時的資料起點
+            var startIndex = 0;
+            for (var k = 0; k < hourly.time.length; k++) {
+              var hourPart = parseInt(hourly.time[k].substring(11, 13), 10);
+              var dayPart = parseInt(hourly.time[k].substring(8, 10), 10);
+              if (dayPart === twNow.getDate() && hourPart === currentHour) {
+                startIndex = k;
+                break;
+              }
+            }
+
+            var hourlyCells = '';
+            for (var h = 0; h < 6; h++) {
+              var targetIdx = startIndex + h;
+              if (targetIdx < hourly.time.length) {
+                var timeStr = hourly.time[targetIdx].substring(11, 16);
+                var hCode = hourly.weather_code[targetIdx];
+                var hTemp = Math.round(hourly.temperature_2m[targetIdx]);
+                var hPop = (hourly.precipitation_probability && hourly.precipitation_probability[targetIdx] !== undefined)
+                           ? hourly.precipitation_probability[targetIdx] : 0;
+
+                hourlyCells += '<td>' +
+                  '<div class="h-time">' + timeStr + '</div>' +
+                  '<div class="h-cond">' + getDesc(hCode) + '</div>' +
+                  '<div class="h-temp">' + hTemp + '°</div>' +
+                  '<div class="h-pop">☂' + hPop + '%</div>' +
+                '</td>';
+              }
+            }
+            document.getElementById('hourly-table').innerHTML = '<tbody><tr>' + hourlyCells + '</tr></tbody>';
+
+            // B. 生成 7 天預報列表
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             var rows = '';
 
