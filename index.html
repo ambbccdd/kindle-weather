@@ -3,175 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kindle Weather - 中和</title>
+  <title>Kindle Weather</title>
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-font-smoothing: none;
-    }
+    * { box-sizing: border-box; }
     body {
-      background-color: #ffffff;
-      color: #000000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #fff;
+      color: #000;
+      font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 6vh 20px 20px;
+      padding: 24px 16px;
     }
-    /* 當前時間與主天氣 */
     .time {
-      font-size: 4.8rem;
-      font-weight: 800;
+      font-size: 58px;
+      font-weight: bold;
       line-height: 1;
-      letter-spacing: -2px;
       margin-bottom: 6px;
     }
     .date {
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 24px;
+      font-size: 18px;
+      margin-bottom: 20px;
     }
-    .main-weather {
-      display: flex;
-      justify-content: center;
-      align-items: baseline;
-      gap: 15px;
+    .current {
+      font-size: 50px;
+      font-weight: bold;
+      line-height: 1;
       margin-bottom: 6px;
     }
-    .temp {
-      font-size: 5rem;
-      font-weight: 800;
-      line-height: 1;
+    .desc {
+      font-size: 20px;
+      margin-bottom: 18px;
     }
-    .condition {
-      font-size: 1.8rem;
-      font-weight: bold;
+    hr {
+      border: 0;
+      border-top: 2px solid #000;
+      margin: 18px auto;
+      width: 95%;
     }
-    .details {
-      font-size: 1.1rem;
-      color: #222222;
-      margin-bottom: 28px;
-    }
-    .divider {
-      width: 90%;
-      height: 2px;
-      background-color: #000000;
-      margin: 0 auto 24px;
-    }
-    /* 未來一週預報列表 */
-    .forecast-title {
-      font-size: 1.1rem;
-      font-weight: bold;
-      text-align: left;
-      width: 90%;
-      max-width: 480px;
-      margin: 0 auto 12px;
-      letter-spacing: 1px;
-    }
-    .forecast-container {
-      width: 90%;
-      max-width: 480px;
+    table {
+      width: 95%;
       margin: 0 auto;
-      border-top: 1px solid #000000;
+      border-collapse: collapse;
+      font-size: 16px;
     }
-    .forecast-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 9px 4px;
-      font-size: 1.1rem;
-      border-bottom: 1px solid #dddddd;
+    td {
+      padding: 7px 2px;
+      border-bottom: 1px solid #ccc;
     }
-    .forecast-day {
-      font-weight: 600;
-      width: 28%;
-      text-align: left;
-    }
-    .forecast-cond {
-      width: 38%;
-      text-align: center;
-    }
-    .forecast-temp {
-      width: 34%;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
+    .col-day { text-align: left; width: 30%; font-weight: bold; }
+    .col-cond { text-align: center; width: 35%; }
+    .col-temp { text-align: right; width: 35%; }
   </style>
-  <!-- 每 30 分鐘自動重整頁面抓取最新氣象 -->
   <meta http-equiv="refresh" content="1800">
 </head>
 <body>
   <div class="time" id="clock">--:--</div>
   <div class="date" id="date">載入中...</div>
 
-  <div class="main-weather">
-    <div class="temp" id="temp">--°C</div>
-    <div class="condition" id="condition">讀取中...</div>
-  </div>
-  <div class="details" id="details">中和區 ｜ 資料載入中...</div>
+  <div class="current" id="temp">--°C</div>
+  <div class="desc" id="cond">中和天氣讀取中...</div>
 
-  <div class="divider"></div>
+  <hr>
 
-  <div class="forecast-title">未來 7 天預報</div>
-  <div class="forecast-container" id="forecast">
-    <div style="padding: 20px 0;">載入預報中...</div>
-  </div>
+  <table id="forecast-table">
+    <tbody>
+      <tr><td colspan="3" style="text-align:center;">更新預報中...</td></tr>
+    </tbody>
+  </table>
 
   <script>
-    // 1. 本地時間與時鐘
-    function updateClock() {
-      var now = new Date();
+    // 1. 時鐘更新
+    function setClock() {
+      var d = new Date();
       var days = ['日', '一', '二', '三', '四', '五', '六'];
-      var h = String(now.getHours()).padStart(2, '0');
-      var m = String(now.getMinutes()).padStart(2, '0');
+      var h = (d.getHours() < 10 ? '0' : '') + d.getHours();
+      var m = (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
       document.getElementById('clock').innerText = h + ':' + m;
-      document.getElementById('date').innerText = (now.getMonth() + 1) + '月' + now.getDate() + '日 星期' + days[now.getDay()];
+      document.getElementById('date').innerText = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
     }
-    updateClock();
-    setInterval(updateClock, 60000);
+    setClock();
 
-    // 2. WMO 天氣代碼轉文字
-    function getWeatherDesc(code) {
+    // 2. 簡易代碼轉換
+    function getDesc(code) {
       if (code === 0) return '晴朗';
-      if (code === 1 || code === 2 || code === 3) return '多雲/陰';
-      if (code === 45 || code === 48) return '有霧';
-      if (code >= 51 && code <= 55) return '毛毛雨';
-      if (code >= 61 && code <= 65) return '下雨';
-      if (code >= 80 && code <= 82) return '短暫陣雨';
-      if (code >= 95) return '雷雨';
-      return '晴到多雲';
-    }
-
-    // 3. 取得新北中和天氣 (經緯度: 24.998, 121.503)
-    var lat = 24.998;
-    var lon = 121.503;
-    var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
-      '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code' +
-      '&daily=weather_code,temperature_2m_max,temperature_2m_min' +
-      '&timezone=Asia%2FTaipei';
-
-    fetch(apiUrl)
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        // 當前天氣
-        var cur = data.current;
-        document.getElementById('temp').innerText = Math.round(cur.temperature_2m) + '°C';
-        document.getElementById('condition').innerText = getWeatherDesc(cur.weather_code);
-        document.getElementById('details').innerText = '新北中和 ｜ 體感 ' + Math.round(cur.apparent_temperature) + '°C ｜ 濕度 ' + cur.relative_humidity_2m + '%';
-
-        // 未來 7 天預報列表
-        var daily = data.daily;
-        var html = '';
-        var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-
-        for (var i = 0; i < daily.time.length; i++) {
-          var dateParts = daily.time[i].split('-');
-          var d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-          var dayLabel = (i === 0) ? '今天' : ('週' + dayNames[d.getDay()]);
-          var dateLabel = (d.getMonth() + 1) + '/' + d.getDate();
-          var condText = getWeatherDesc(daily.weather_code[i]);
-          var minT = Math.round(daily.temperature_2m_min[i]);
-          var maxT = Math.round(daily.temperature_2m_max[i]);
-
-          html += '<div class="forecast-row">' +
-                    '<div class="forecast-day">' + dayLabel + ' <span style="font-size:0.85rem;color:#555;">' + dateLabel + '</span></div>' +
-                    '<div class
+      if (code <= 3) return '多雲';
+      if
