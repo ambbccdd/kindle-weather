@@ -6,68 +6,92 @@
   <title>Kindle Weather</title>
   <style>
     * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      overflow: hidden; /* 徹底消除滾動條 */
+    }
     body {
       background-color: #ffffff;
       color: #000000;
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 12px 10px;
+      padding: 10px 12px 6px;
+    }
+    /* 頂部雙欄並排區塊 */
+    .top-section {
+      width: 98%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    .top-left {
+      width: 48%;
+      vertical-align: middle;
+      border-right: 2px solid #000000;
+      padding-right: 8px;
+    }
+    .top-right {
+      width: 52%;
+      vertical-align: middle;
+      padding-left: 12px;
     }
     .time {
-      font-size: 96px;
+      font-size: 72px;
       font-weight: bold;
-      line-height: 1;
+      line-height: 0.95;
       letter-spacing: -2px;
-      margin-bottom: 6px;
+      margin-bottom: 2px;
     }
     .date {
-      font-size: 18px;
-      margin-bottom: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 4px;
     }
     .current {
-      font-size: 80px;
+      font-size: 76px;
       font-weight: bold;
-      line-height: 1;
+      line-height: 0.95;
       letter-spacing: -2px;
-      margin-bottom: 6px;
     }
-    .desc {
-      font-size: 19px;
-      margin-bottom: 6px;
+    .cond-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 4px;
     }
-    .sub-info {
-      font-size: 15px;
-      color: #222222;
-      margin-bottom: 10px;
+    .meta-line {
+      font-size: 14px;
+      margin-bottom: 3px;
+      color: #111111;
     }
     .tips-box {
       display: inline-block;
       border: 1px solid #000000;
-      padding: 4px 12px;
-      font-size: 14px;
+      padding: 3px 6px;
+      font-size: 12px;
       font-weight: bold;
-      border-radius: 4px;
-      margin-bottom: 4px;
+      border-radius: 3px;
+      margin-top: 4px;
+      line-height: 1.2;
     }
     hr {
       border: 0;
       border-top: 2px solid #000000;
-      margin: 10px auto;
-      width: 95%;
+      margin: 8px auto 6px;
+      width: 98%;
     }
-    /* 6 小時逐時天氣表格：高對比水平分欄 */
+    /* 6 小時逐時天氣表格 */
     .hourly-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: bold;
       text-align: left;
-      width: 95%;
-      margin: 0 auto 4px;
+      width: 98%;
+      margin: 0 auto 3px;
       letter-spacing: 1px;
     }
     .hourly-table {
-      width: 95%;
-      margin: 0 auto 6px;
+      width: 98%;
+      margin: 0 auto 5px;
       border-collapse: collapse;
       border-top: 1px solid #000000;
       border-bottom: 1px solid #000000;
@@ -75,60 +99,70 @@
     .hourly-table td {
       width: 16.6%;
       text-align: center;
-      padding: 6px 1px;
+      padding: 4px 1px;
       border-right: 1px solid #e0e0e0;
-      font-size: 13px;
+      font-size: 12px;
+      line-height: 1.15;
       vertical-align: top;
     }
     .hourly-table td:last-child {
       border-right: none;
     }
-    .h-time { font-weight: bold; margin-bottom: 2px; }
-    .h-cond { margin-bottom: 2px; }
-    .h-temp { font-weight: bold; font-size: 14px; }
-    .h-pop { font-size: 11px; color: #333333; margin-top: 2px; }
+    .h-time { font-weight: bold; }
+    .h-temp { font-weight: bold; font-size: 13px; }
+    .h-pop { font-size: 11px; color: #222222; }
 
     /* 7 天預報列表 */
     .forecast-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: bold;
       text-align: left;
-      width: 95%;
-      margin: 8px auto 4px;
+      width: 98%;
+      margin: 4px auto 2px;
       letter-spacing: 1px;
     }
     .forecast-table {
-      width: 95%;
+      width: 98%;
       margin: 0 auto;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 13px;
     }
     .forecast-table td {
-      padding: 5px 2px;
-      border-bottom: 1px solid #cccccc;
+      padding: 3px 2px;
+      border-bottom: 1px solid #dcdcdc;
+      line-height: 1.2;
     }
     .col-day { text-align: left; width: 28%; font-weight: bold; }
     .col-cond { text-align: center; width: 26%; }
-    .col-pop { text-align: center; width: 20%; color: #333333; }
+    .col-pop { text-align: center; width: 20%; color: #222222; }
     .col-temp { text-align: right; width: 26%; }
   </style>
   <meta http-equiv="refresh" content="1800">
 </head>
 <body>
-  <div class="time" id="clock">--:--</div>
-  <div class="date" id="date">載入中...</div>
-
-  <div class="current" id="temp">--°C</div>
-  <div class="desc" id="cond">連線中...</div>
-  <div class="sub-info" id="sub-info">降雨機率 --% ｜ 空氣 讀取中...</div>
-  <div class="tips-box" id="tips">穿衣建議：載入中...</div>
+  <!-- 頂部左右並排區塊 -->
+  <table class="top-section">
+    <tr>
+      <td class="top-left">
+        <div class="time" id="clock">--:--</div>
+        <div class="date" id="date">載入中...</div>
+        <div class="current" id="temp">--°C</div>
+      </td>
+      <td class="top-right">
+        <div class="cond-title" id="cond">新北中和 · 連線中</div>
+        <div class="meta-line" id="meta-pop">降雨機率：--%</div>
+        <div class="meta-line" id="meta-aqi">空氣品質：讀取中...</div>
+        <div class="tips-box" id="tips">穿衣建議：載入中...</div>
+      </td>
+    </tr>
+  </table>
 
   <hr>
 
   <div class="hourly-title">未來 6 小時氣象</div>
   <table class="hourly-table" id="hourly-table">
     <tbody>
-      <tr><td colspan="6" style="padding:10px;">逐時預報載入中...</td></tr>
+      <tr><td colspan="6" style="padding:6px;">逐時預報載入中...</td></tr>
     </tbody>
   </table>
 
@@ -140,7 +174,7 @@
   </table>
 
   <script>
-    // 1. 本地時鐘（自動每分鐘推進，不需手動重整）
+    // 1. 本地時鐘（自動每分鐘推進）
     var lastMinute = -1;
 
     function setClock() {
@@ -178,35 +212,35 @@
 
     // 3. 空氣品質標籤
     function getAqiInfo(aqi) {
-      if (aqi <= 50) return '良好 (AQI ' + aqi + ')';
-      if (aqi <= 100) return '普通 (AQI ' + aqi + ')';
-      if (aqi <= 150) return '敏感不健康 (AQI ' + aqi + ')';
-      if (aqi <= 200) return '不健康 (AQI ' + aqi + ')';
-      return '危害 (AQI ' + aqi + ')';
+      if (aqi <= 50) return '良好 (' + aqi + ')';
+      if (aqi <= 100) return '普通 (' + aqi + ')';
+      if (aqi <= 150) return '敏感不健康 (' + aqi + ')';
+      if (aqi <= 200) return '不健康 (' + aqi + ')';
+      return '危害 (' + aqi + ')';
     }
 
     // 4. 生活與穿衣建議
     function getClothingTip(temp, pop, aqi) {
       var tip = '';
       if (temp >= 28) {
-        tip = '短袖、輕便涼爽衣物';
+        tip = '短袖涼爽';
       } else if (temp >= 24) {
-        tip = '短袖或薄長袖，通風舒適';
+        tip = '短袖/薄長袖';
       } else if (temp >= 20) {
-        tip = '長袖襯衫、早晚搭薄外套';
+        tip = '薄外套/長袖';
       } else if (temp >= 16) {
-        tip = '夾克外套、針織衫或風衣';
+        tip = '夾克/針織衫';
       } else if (temp >= 12) {
-        tip = '厚外套、毛衣，注意保暖';
+        tip = '厚外套/毛衣保暖';
       } else {
-        tip = '羽絨衣、發熱衣，嚴防低溫';
+        tip = '羽絨衣/嚴防低溫';
       }
 
       if (pop >= 30) {
-        tip += ' · 出門備傘 ☂';
+        tip += ' · 備傘 ☂';
       }
       if (aqi > 100) {
-        tip += ' · 空品差戴口罩 😷';
+        tip += ' · 口罩 😷';
       }
 
       return tip;
@@ -245,7 +279,7 @@
     xhrAqi.ontimeout = function() { loadWeather(); };
     xhrAqi.send();
 
-    // 6. 抓取天氣數據（含近 6 小時逐時與一週預報）
+    // 6. 抓取天氣數據
     function loadWeather() {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', weatherUrl, true);
@@ -265,17 +299,17 @@
                            ? daily.precipitation_probability_max[0] : 0;
 
             document.getElementById('temp').innerHTML = curTemp + '°C';
-            document.getElementById('cond').innerHTML = '新北中和 · ' + getDesc(curCode);
-            document.getElementById('sub-info').innerHTML = '降雨機率 ' + todayPop + '% ｜ 空氣 ' + aqiText;
-            document.getElementById('tips').innerHTML = '生活建議：' + getClothingTip(curTemp, todayPop, currentAqi);
+            document.getElementById('cond').innerHTML = '中和 · ' + getDesc(curCode);
+            document.getElementById('meta-pop').innerHTML = '降雨機率：' + todayPop + '%';
+            document.getElementById('meta-aqi').innerHTML = '空氣品質：' + aqiText;
+            document.getElementById('tips').innerHTML = '建議：' + getClothingTip(curTemp, todayPop, currentAqi);
 
-            // A. 計算並生成未來 6 小時逐時預報
+            // A. 未來 6 小時逐時預報
             var now = new Date();
             var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
             var twNow = new Date(utc + (3600000 * 8));
             var currentHour = twNow.getHours();
 
-            // 尋找符合當前小時的資料起點
             var startIndex = 0;
             for (var k = 0; k < hourly.time.length; k++) {
               var hourPart = parseInt(hourly.time[k].substring(11, 13), 10);
@@ -298,7 +332,7 @@
 
                 hourlyCells += '<td>' +
                   '<div class="h-time">' + timeStr + '</div>' +
-                  '<div class="h-cond">' + getDesc(hCode) + '</div>' +
+                  '<div>' + getDesc(hCode) + '</div>' +
                   '<div class="h-temp">' + hTemp + '°</div>' +
                   '<div class="h-pop">☂' + hPop + '%</div>' +
                 '</td>';
@@ -306,7 +340,7 @@
             }
             document.getElementById('hourly-table').innerHTML = '<tbody><tr>' + hourlyCells + '</tr></tbody>';
 
-            // B. 生成 7 天預報列表
+            // B. 未來 7 天預報列表
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             var rows = '';
 
@@ -320,7 +354,7 @@
               var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
 
               rows += '<tr>' +
-                        '<td class="col-day">' + dayText + ' <span style="font-size:12px;color:#555;">' + dateText + '</span></td>' +
+                        '<td class="col-day">' + dayText + ' <span style="font-size:11px;color:#555;">' + dateText + '</span></td>' +
                         '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
                         '<td class="col-pop">☂ ' + pop + '%</td>' +
                         '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
