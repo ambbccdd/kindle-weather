@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kindle Weather</title>
- <style>
+  <style>
     * { box-sizing: border-box; }
     html, body {
       height: 100%;
@@ -16,7 +16,7 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 18px 10px 4px; /* 頂部保持舒適留白 */
+      padding: 18px 10px 4px; /* 頂部留白 */
     }
     /* 頂部雙欄並排區塊 */
     .top-section {
@@ -81,7 +81,7 @@
       margin: 6px auto 4px;
       width: 98%;
     }
-    /* 6 小時逐時天氣表格（放大至 15px） */
+    /* 6 小時逐時天氣表格 */
     .hourly-title {
       font-size: 14px;
       font-weight: bold;
@@ -113,7 +113,7 @@
     .h-temp { font-weight: bold; font-size: 16px; }
     .h-pop { font-size: 13px; color: #111111; font-weight: 600; }
 
-    /* 7 天預報列表（放大至 17px，清晰粗體） */
+    /* 7 天預報列表 */
     .forecast-title {
       font-size: 14px;
       font-weight: bold;
@@ -133,11 +133,11 @@
       border-bottom: 1px solid #dcdcdc;
       line-height: 1.15;
     }
-  .col-day { 
+    .col-day { 
       text-align: left; 
       width: 30%; 
       font-weight: bold; 
-      padding-left: 10px !important; /* 第一欄左側留白 */
+      padding-left: 10px !important; 
     }
     .col-cond { text-align: center; width: 25%; }
     .col-pop { text-align: center; width: 20%; color: #111111; font-weight: 600; }
@@ -145,10 +145,10 @@
       text-align: right; 
       width: 25%; 
       font-weight: bold; 
-      padding-right: 10px !important; /* 最右欄溫度右側留白 */
+      padding-right: 10px !important; 
     }
 
-    /* 每日正面話語區塊（放大至 18px） */
+    /* 每日正面話語區塊 */
     .quote-box {
       width: 98%;
       margin: 6px auto 0;
@@ -164,7 +164,6 @@
   <meta http-equiv="refresh" content="1800">
 </head>
 <body>
-  <!-- 頂部左右並排區塊 -->
   <table class="top-section">
     <tr>
       <td class="top-left">
@@ -197,11 +196,9 @@
     </tbody>
   </table>
 
-  <!-- 每日正面小語（15px 大字） -->
-  <div class="quote-box" id="daily-quote">✨ 讀取今日心靈小語...</div>
+  <div class="quote-box" id="daily-quote">讀取今日心靈小語...</div>
 
   <script>
-    // 每日正面語庫（共 31 句，依日期自動輪播）
     var quotes = [
       "「每一個平凡的日子，都值得全力以赴。」",
       "「今天也是充滿無限可能的一天，加油！」",
@@ -233,23 +230,102 @@
       "「做你熱愛的事，時間會給出最好的答案。」",
       "「休息是為了走更長遠的路，今天也要張弛有度。」",
       "「願你今天收穫滿滿的陽光與安心。」",
-      "「堅定步伐，未來的所有美好都在向你奔來。」"
+      "「堅定步伐，未來的所有美好都在向你奔來。」",
+      "「所有沉澱的時光，都在為你的綻放蓄力。」",
+      "「日子簡單過，心情好好過，就是最大的幸福。」",
+      "「接納不完美的自己，本身就是一種勇氣。」",
+      "「心中有光的人，走到哪裡都不會迷路。」",
+      "「給生活留一點縫隙，陽光才能照得進來。」",
+      "「所有的努力，都有它的意義與回響。」",
+      "「專注在自己能掌控的事，其餘的交給時間。」",
+      "「每一次深呼吸，都是重新整理心情的契機。」",
+      "「生活中的微小確幸，都是治癒疲憊的良藥。」",
+      "「學會欣賞路旁的風景，不必急著趕往終點。」",
+      "「保持初心，歲月定不辜負認真生活的你。」",
+      "「心境寬廣了，眼前的小事就難不倒你。」",
+      "「相信好事即將發生，期待讓生活更有滋味。」",
+      "「對自己多一點耐心，每個階段都有它的美好。」",
+      "「今天的付出，會在未來的某一天溫暖你。」",
+      "「用好奇心探索世界，每天都有新收穫。」",
+      "「順其自然，也是一種充滿智慧的生活態度。」",
+      "「你所經歷的每段路，都在塑造更強大的自己。」",
+      "「平靜是內心最強大的防護罩。」",
+      "「好好吃飯，好好休息，照顧好自己是一切的基礎。」",
+      "「清空心中的雜念，騰出空間裝載快樂。」",
+      "「不論走得多慢，只要持續前行就是在進步。」",
+      "「為自己鼓掌，你已經走過了許多不容易的時刻。」",
+      "「每一天的晨光，都是大自然給予的新起點。」",
+      "「把溫暖傳遞給他人，幸福感會加倍流回心裡。」",
+      "「允許自己休息片刻，重新找回向前的動力。」",
+      "「生活就像一本好書，精彩的一頁往往在下一篇。」",
+      "「心存善念，沿途自會花香滿徑。」",
+      "「保持清醒與自律，做生活真正的主人。」",
+      "「不要害怕改變，那是遇見更好自己的機會。」",
+      "「在平凡的日常裡，發現不平凡的閃光點。」",
+      "「給身邊的人一聲問候，也能溫暖自己一整天。」",
+      "「放下執念，輕裝上陣，才能走得更遠。」",
+      "「今天的你，比昨天更加從容且堅韌。」",
+      "「把眼光放遠一點，眼前的挫折只是過客。」",
+      "「珍惜身邊陪伴的人，用心感受真實的溫度。」",
+      "「讓微笑成為你的名片，善良成為你的底色。」",
+      "「在忙碌的日子裡，留五分鐘給內心的寧靜。」",
+      "「你的存在本身，就是一份獨特而珍貴的禮物。」",
+      "「每一份小小的善良，都在讓世界變得更美好。」",
+      "「生活沒有標準答案，你的選擇就是最好的人生。」",
+      "「心若沒有棲息的地方，到哪裡都是流浪；心安即是家。」",
+      "「把精力留給值得的人與事，生活會清爽很多。」",
+      "「堅持做對的事，時間會證明一切的價值。」",
+      "「擁抱變化，因為每一陣風都在為你揚帆。」",
+      "「用心感受每一頓飯的滋味，活在當下。」",
+      "「不用討好所有人，做真實自在的自己就好。」",
+      "「今天也是值得被認真對待的一天。」",
+      "「哪怕是一顆小種子，也能長成參天大樹。」",
+      "「在風雨中學會堅韌，在陽光下盡情綻放。」",
+      "「給生活加一點儀式感，平淡也能充滿詩意。」",
+      "「懂得感恩的人，擁有最強大的幸福超能力。」",
+      "「句句好話如暖風，時時善念若春水。」",
+      "「讓過去的過去，讓該來的到來，從容面對。」",
+      "「你的笑容，能治癒很多生活中的不如意。」",
+      "「用心傾聽內心的聲音，不被外界雜音干擾。」",
+      "「把每一次挑戰，都當作拓展能力的機會。」",
+      "「對未知保持期待，驚喜往往在轉角處。」",
+      "「今天的微小努力，是送給未來自己最好的禮物。」",
+      "「安靜且堅定地走自己的路，自有芬芳。」",
+      "「用寬容的心看待世界，世界也會變得溫柔。」",
+      "「在最平常的早晨，遇見最充滿希望的自己。」",
+      "「每一個日落，都是對今天努力最好的犒賞。」",
+      "「不論外界如何喧鬧，內心依然保持安然自得。」",
+      "「懂得滿足，就是最富足的生活方式。」",
+      "「願你眼里有光，心裡有愛，腳下有力量。」",
+      "「每一次放下，都是為了更好地拿起。」",
+      "「生活中的溫柔，藏在每一次真誠的對待裡。」",
+      "「新的一天，帶著從容與微笑，出發吧！」"
     ];
 
     function updateDailyQuote(twDate) {
-      var seed = twDate.getFullYear() * 10000 + (twDate.getMonth() + 1) * 100 + twDate.getDate();
-      var index = seed % quotes.length;
-      document.getElementById('daily-quote').innerHTML = '✨ ' + quotes[index];
+      var y = twDate.getFullYear();
+      var m = twDate.getMonth() + 1;
+      var d = twDate.getDate();
+
+      var start = new Date(2026, 0, 1);
+      var current = new Date(y, m - 1, d);
+      var diffDays = Math.floor((current - start) / (1000 * 60 * 60 * 24));
+
+      var index = Math.abs(diffDays * 37) % quotes.length;
+      document.getElementById('daily-quote').innerHTML = quotes[index];
     }
 
-    // 1. 本地時鐘（自動每分鐘推進）
+    // 取得強制 UTC+8 的 Date 物件
+    function getTwNow() {
+      var now = new Date();
+      var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      return new Date(utc + (3600000 * 8));
+    }
+
     var lastMinute = -1;
 
     function setClock() {
-      var now = new Date();
-      var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      var d = new Date(utc + (3600000 * 8)); // 強制 UTC+8 台灣時間
-
+      var d = getTwNow();
       var m = d.getMinutes();
 
       if (m !== lastMinute) {
@@ -269,7 +345,6 @@
     setClock();
     setInterval(setClock, 10000);
 
-    // 2. 天氣代碼轉換
     function getDesc(code) {
       if (code === 0) return '晴朗';
       if (code <= 3) return '多雲';
@@ -279,7 +354,6 @@
       return '陰天';
     }
 
-    // 3. 空氣品質標籤
     function getAqiInfo(aqi) {
       if (aqi <= 50) return '良好 (' + aqi + ')';
       if (aqi <= 100) return '普通 (' + aqi + ')';
@@ -288,7 +362,6 @@
       return '危害 (' + aqi + ')';
     }
 
-    // 4. 生活與穿衣建議
     function getClothingTip(temp, pop, aqi) {
       var tip = '';
       if (temp >= 28) {
@@ -309,7 +382,7 @@
         tip += ' · 備傘 ☂';
       }
       if (aqi > 100) {
-        tip += ' · 口罩 😷';
+        tip += ' · 建議戴口罩';
       }
 
       return tip;
@@ -318,13 +391,13 @@
     var lat = 24.998;
     var lon = 121.503;
 
-    // 5. 抓取空氣品質
-    var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi&timezone=auto';
+    // 強制指定 Asia/Taipei 時區（避免跨時區偏差）
+    var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi&timezone=Asia%2FTaipei';
     var weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
       '&current=temperature_2m,weather_code' +
       '&hourly=temperature_2m,weather_code,precipitation_probability' +
       '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
-      '&timezone=auto';
+      '&timezone=Asia%2FTaipei';
 
     var currentAqi = 0;
     var aqiText = '讀取中...';
@@ -348,7 +421,6 @@
     xhrAqi.ontimeout = function() { loadWeather(); };
     xhrAqi.send();
 
-    // 6. 抓取天氣數據
     function loadWeather() {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', weatherUrl, true);
@@ -364,34 +436,44 @@
 
             var curTemp = Math.round(cur.temperature_2m);
             var curCode = cur.weather_code;
-            var todayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[0] !== undefined)
-                           ? daily.precipitation_probability_max[0] : 0;
 
-            document.getElementById('temp').innerHTML = curTemp + '°C';
-            document.getElementById('cond').innerHTML = '中和 · ' + getDesc(curCode);
-            document.getElementById('meta-pop').innerHTML = '降雨機率：' + todayPop + '%';
-            document.getElementById('meta-aqi').innerHTML = '空氣品質：' + aqiText;
-            document.getElementById('tips').innerHTML = '建議：' + getClothingTip(curTemp, todayPop, currentAqi);
+            // 1. 計算當前台灣標準時間格式：YYYY-MM-DDTHH:00
+            var twNow = getTwNow();
+            var y = twNow.getFullYear();
+            var m = twNow.getMonth() + 1;
+            var d = twNow.getDate();
+            var h = twNow.getHours();
 
-            // A. 未來 6 小時逐時預報
-            var now = new Date();
-            var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            var twNow = new Date(utc + (3600000 * 8));
-            var currentHour = twNow.getHours();
+            var pad = function(num) { return (num < 10 ? '0' : '') + num; };
+            var currentTargetPrefix = y + '-' + pad(m) + '-' + pad(d) + 'T' + pad(h);
+            var todayDateStr = y + '-' + pad(m) + '-' + pad(d);
 
-            var startIndex = 0;
+            // 2. 精確找出目前小時在 hourly 陣列中的位置
+            var startIndex = -1;
             for (var k = 0; k < hourly.time.length; k++) {
-              var hourPart = parseInt(hourly.time[k].substring(11, 13), 10);
-              var dayPart = parseInt(hourly.time[k].substring(8, 10), 10);
-              if (dayPart === twNow.getDate() && hourPart === currentHour) {
+              if (hourly.time[k].indexOf(currentTargetPrefix) === 0) {
                 startIndex = k;
                 break;
               }
             }
+            if (startIndex === -1) {
+              startIndex = 0;
+            }
 
+            // 3. 取得當前的即時降雨機率（以當前整點預估為主）
+            var currentPop = (hourly.precipitation_probability && hourly.precipitation_probability[startIndex] !== undefined)
+                             ? hourly.precipitation_probability[startIndex] : 0;
+
+            document.getElementById('temp').innerHTML = curTemp + '°C';
+            document.getElementById('cond').innerHTML = '中和 · ' + getDesc(curCode);
+            document.getElementById('meta-pop').innerHTML = '降雨機率：' + currentPop + '%';
+            document.getElementById('meta-aqi').innerHTML = '空氣品質：' + aqiText;
+            document.getElementById('tips').innerHTML = '建議：' + getClothingTip(curTemp, currentPop, currentAqi);
+
+            // A. 未來 6 小時逐時預報
             var hourlyCells = '';
-            for (var h = 0; h < 6; h++) {
-              var targetIdx = startIndex + h;
+            for (var i = 0; i < 6; i++) {
+              var targetIdx = startIndex + i;
               if (targetIdx < hourly.time.length) {
                 var timeStr = hourly.time[targetIdx].substring(11, 16);
                 var hCode = hourly.weather_code[targetIdx];
@@ -403,32 +485,45 @@
                   '<div class="h-time">' + timeStr + '</div>' +
                   '<div>' + getDesc(hCode) + '</div>' +
                   '<div class="h-temp">' + hTemp + '°</div>' +
-                  '<div class="h-pop">☂' + hPop + '%</div>' +
+                  '<div class="h-pop">☂ ' + hPop + '%</div>' +
                 '</td>';
               }
             }
             document.getElementById('hourly-table').innerHTML = '<tbody><tr>' + hourlyCells + '</tr></tbody>';
 
-            // B. 未來 7 天預報列表
+            // B. 未來 7 天預報列表（以今天日期為準對齊）
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             var rows = '';
 
-           for (var i = 0; i < daily.time.length; i++) {
-            var parts = daily.time[i].split('-');
-            var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-            var dayText = (i === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
-            var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
-            var maxT = Math.round(daily.temperature_2m_max[i]);
-            var minT = Math.round(daily.temperature_2m_min[i]);
-            var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
+            // 找到今天在 daily 中的起點
+            var dailyStart = 0;
+            for (var dIdx = 0; dIdx < daily.time.length; dIdx++) {
+              if (daily.time[dIdx] === todayDateStr) {
+                dailyStart = dIdx;
+                break;
+              }
+            }
 
-            rows += '<tr>' +
-                      '<td class="col-day">' + dayText + ' <span style="font-size:15px;color:#333;font-weight:bold;">' + dateText + '</span></td>' +
-                      '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
-                      '<td class="col-pop">☂ ' + pop + '%</td>' +
-                      '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
-                    '</tr>';
-          }
+            for (var j = 0; j < 7; j++) {
+              var actualDayIdx = dailyStart + j;
+              if (actualDayIdx < daily.time.length) {
+                var parts = daily.time[actualDayIdx].split('-');
+                var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                var dayText = (j === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
+                var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
+                var maxT = Math.round(daily.temperature_2m_max[actualDayIdx]);
+                var minT = Math.round(daily.temperature_2m_min[actualDayIdx]);
+                var pop = (daily.precipitation_probability_max && daily.precipitation_probability_max[actualDayIdx] !== undefined)
+                          ? daily.precipitation_probability_max[actualDayIdx] : 0;
+
+                rows += '<tr>' +
+                          '<td class="col-day">' + dayText + ' <span style="font-size:15px;color:#333;font-weight:bold;">' + dateText + '</span></td>' +
+                          '<td class="col-cond">' + getDesc(daily.weather_code[actualDayIdx]) + '</td>' +
+                          '<td class="col-pop">☂ ' + pop + '%</td>' +
+                          '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
+                        '</tr>';
+              }
+            }
             document.getElementById('forecast-table').innerHTML = '<tbody>' + rows + '</tbody>';
           } catch (e) {
             document.getElementById('cond').innerHTML = '資料解析失敗';
