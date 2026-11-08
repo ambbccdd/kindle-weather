@@ -19,57 +19,83 @@
       padding: 16px 12px 6px;
     }
 
-    /* 置中時間與即時天氣區塊 */
-    .hero-section {
-      width: 100%;
+    /* 頂部三欄表格結構：左側對稱配重、中央時間溫度置中、右側穿衣氣象建議 */
+    .hero-table {
+      width: 98%;
       margin: 0 auto;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .hero-side-left {
+      width: 25%;
+      vertical-align: middle;
+    }
+    .hero-center {
+      width: 50%;
+      vertical-align: middle;
       text-align: center;
     }
+    .hero-side-right {
+      width: 25%;
+      vertical-align: middle;
+      text-align: left;
+      padding-left: 10px;
+      border-left: 1px dashed #000000;
+    }
+
     .hero-time {
-      font-size: 96px;
+      font-size: 92px;
       font-weight: bold;
       line-height: 0.95;
       letter-spacing: -2px;
-      margin: 0 auto 4px;
+      margin: 0 auto 3px;
     }
     .hero-date {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
       letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
     }
     .hero-temp-row {
       display: flex;
       justify-content: center;
       align-items: baseline;
-      gap: 12px;
-      margin-bottom: 6px;
+      gap: 8px;
     }
     .hero-temp {
-      font-size: 88px;
+      font-size: 84px;
       font-weight: bold;
       line-height: 0.95;
       letter-spacing: -2px;
     }
     .hero-cond {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: bold;
     }
-    .hero-meta {
-      font-size: 16px;
+
+    /* 右側氣象詳情與穿衣建議 */
+    .side-location {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .side-meta {
+      font-size: 14px;
       font-weight: 600;
-      margin-bottom: 6px;
-      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      line-height: 1.25;
+      color: #111111;
     }
     .tips-box {
       display: inline-block;
       border: 1px solid #000000;
-      padding: 4px 12px;
-      font-size: 14px;
+      padding: 4px 8px;
+      font-size: 13px;
       font-weight: bold;
       border-radius: 4px;
-      margin-top: 2px;
+      margin-top: 5px;
       line-height: 1.25;
+      text-align: center;
     }
 
     hr {
@@ -79,7 +105,7 @@
       width: 98%;
     }
 
-    /* 未來一週折線圖容器（空間加大） */
+    /* 未來一週折線圖容器 */
     .chart-header {
       width: 98%;
       margin: 0 auto 4px;
@@ -122,23 +148,26 @@
   <meta http-equiv="refresh" content="1800">
 </head>
 <body>
-  <!-- 置中頂部核心資訊 -->
-  <div class="hero-section">
-    <div class="hero-time" id="clock">--:--</div>
-    <div class="hero-date" id="date">載入中...</div>
-    <div class="hero-temp-row">
-      <span class="hero-temp" id="temp">--°C</span>
-      <span class="hero-cond" id="cond">中和 · 連線中</span>
-    </div>
-    <div class="hero-meta">
-      <span id="meta-pop">降雨機率：--%</span>
-      <span style="margin: 0 8px;">·</span>
-      <span id="meta-aqi">空氣品質：讀取中...</span>
-    </div>
-    <div>
-      <div class="tips-box" id="tips">穿衣建議：載入中...</div>
-    </div>
-  </div>
+  <!-- 頂部置中時間溫度 + 右側穿衣建議佈局 -->
+  <table class="hero-table">
+    <tr>
+      <td class="hero-side-left"></td>
+      <td class="hero-center">
+        <div class="hero-time" id="clock">--:--</div>
+        <div class="hero-date" id="date">載入中...</div>
+        <div class="hero-temp-row">
+          <span class="hero-temp" id="temp">--°C</span>
+          <span class="hero-cond" id="cond">連線中</span>
+        </div>
+      </td>
+      <td class="hero-side-right">
+        <div class="side-location" id="loc-title">中和區</div>
+        <div class="side-meta" id="meta-pop">降雨：--%</div>
+        <div class="side-meta" id="meta-aqi">空品：讀取中...</div>
+        <div class="tips-box" id="tips">建議：載入中...</div>
+      </td>
+    </tr>
+  </table>
 
   <hr>
 
@@ -213,7 +242,7 @@
       "「每一天的晨光，都是大自然給予的新起點。」",
       "「把溫暖傳遞給他人，幸福感會加倍流回心裡。」",
       "「允許自己休息片刻，重新找回向前的動力。」",
-      "「生活就像一本好書，精彩的一頁往往在下一篇。」",
+      "「生活盤根錯節，精彩的一頁往往在下一篇。」",
       "「心存善念，沿途自會花香滿徑。」",
       "「保持清醒與自律，做生活真正的主人。」",
       "「不要害怕改變，那是遇見更好自己的機會。」",
@@ -339,10 +368,10 @@
       }
 
       if (pop >= 30) {
-        tip += ' · 備傘 ☂';
+        tip += '<br>備傘 ☂';
       }
       if (aqi > 100) {
-        tip += ' · 建議戴口罩';
+        tip += '<br>建議戴口罩';
       }
 
       return tip;
@@ -380,10 +409,9 @@
     xhrAqi.ontimeout = function() { loadWeather(); };
     xhrAqi.send();
 
-    // 純 SVG 動態折線圖（適應更大縱向空間）
     function renderWeatherChart(daysData) {
       var w = 560;
-      var h = 210; // 空間放大
+      var h = 210;
       var n = daysData.length;
       var colW = w / n;
 
@@ -482,11 +510,15 @@
                                 ? hourly.precipitation_probability[startIndex] : 0;
             var currentPop = formatPop(rawCurrentPop);
 
+            // 中央時間溫度
             document.getElementById('temp').innerHTML = curTemp + '°C';
-            document.getElementById('cond').innerHTML = '中和 · ' + getDesc(curCode);
-            document.getElementById('meta-pop').innerHTML = '降雨機率：' + currentPop + '%';
-            document.getElementById('meta-aqi').innerHTML = '空氣品質：' + aqiText;
-            document.getElementById('tips').innerHTML = '建議：' + getClothingTip(curTemp, currentPop, currentAqi);
+            document.getElementById('cond').innerHTML = getDesc(curCode);
+
+            // 右側穿衣建議與天氣資訊
+            document.getElementById('loc-title').innerHTML = '中和 · ' + getDesc(curCode);
+            document.getElementById('meta-pop').innerHTML = '降雨：' + currentPop + '%';
+            document.getElementById('meta-aqi').innerHTML = '空品：' + aqiText;
+            document.getElementById('tips').innerHTML = getClothingTip(curTemp, currentPop, currentAqi);
 
             // 整理未來 7 天資料並繪製折線圖
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
@@ -525,19 +557,19 @@
             renderWeatherChart(chartList);
 
           } catch (e) {
-            document.getElementById('cond').innerHTML = '資料解析失敗';
+            document.getElementById('cond').innerHTML = '解析失敗';
           }
         } else {
-          document.getElementById('cond').innerHTML = '伺服器異常 (' + xhr.status + ')';
+          document.getElementById('cond').innerHTML = '異常 ' + xhr.status;
         }
       };
 
       xhr.onerror = function() {
-        document.getElementById('cond').innerHTML = '網路連線失敗';
+        document.getElementById('cond').innerHTML = '連線失敗';
       };
 
       xhr.ontimeout = function() {
-        document.getElementById('cond').innerHTML = '連線逾時，請重整';
+        document.getElementById('cond').innerHTML = '逾時';
       };
 
       xhr.send();
