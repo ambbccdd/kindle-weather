@@ -90,21 +90,33 @@
   </table>
 
   <script>
-    // 1. 本地時鐘（強制 UTC+8）
+// 1. 本地時鐘（自動每分鐘推進，不需手動重新整理）
+    var lastMinute = -1;
+
     function setClock() {
       var now = new Date();
       var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      var d = new Date(utc + (3600000 * 8));
+      var d = new Date(utc + (3600000 * 8)); // 強制 UTC+8 台灣時間
 
-      var days = ['日', '一', '二', '三', '四', '五', '六'];
-      var h = d.getHours();
       var m = d.getMinutes();
-      var hStr = (h < 10 ? '0' : '') + h;
-      var mStr = (m < 10 ? '0' : '') + m;
-      document.getElementById('clock').innerHTML = hStr + ':' + mStr;
-      document.getElementById('date').innerHTML = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
+
+      // 只有在「分鐘改變」時才更新 DOM，避免墨水屏不必要耗電刷新
+      if (m !== lastMinute) {
+        lastMinute = m;
+
+        var days = ['日', '一', '二', '三', '四', '五', '六'];
+        var h = d.getHours();
+        var hStr = (h < 10 ? '0' : '') + h;
+        var mStr = (m < 10 ? '0' : '') + m;
+
+        document.getElementById('clock').innerHTML = hStr + ':' + mStr;
+        document.getElementById('date').innerHTML = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
+      }
     }
+
     setClock();
+    // 每 10 秒偵測一次，分鐘變更時自動推進時鐘
+    setInterval(setClock, 10000);
 
     // 2. 天氣代碼轉換
     function getDesc(code) {
