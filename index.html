@@ -133,10 +133,20 @@
       border-bottom: 1px solid #dcdcdc;
       line-height: 1.15;
     }
-    .col-day { text-align: left; width: 28%; font-weight: bold; }
-    .col-cond { text-align: center; width: 26%; }
+  .col-day { 
+      text-align: left; 
+      width: 30%; 
+      font-weight: bold; 
+      padding-left: 10px !important; /* 第一欄左側留白 */
+    }
+    .col-cond { text-align: center; width: 25%; }
     .col-pop { text-align: center; width: 20%; color: #111111; font-weight: 600; }
-    .col-temp { text-align: right; width: 26%; font-weight: bold; }
+    .col-temp { 
+      text-align: right; 
+      width: 25%; 
+      font-weight: bold; 
+      padding-right: 10px !important; /* 最右欄溫度右側留白 */
+    }
 
     /* 每日正面話語區塊（放大至 18px） */
     .quote-box {
@@ -403,22 +413,22 @@
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             var rows = '';
 
-            for (var i = 0; i < daily.time.length; i++) {
-              var parts = daily.time[i].split('-');
-              var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-              var dayText = (i === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
-              var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
-              var maxT = Math.round(daily.temperature_2m_max[i]);
-              var minT = Math.round(daily.temperature_2m_min[i]);
-              var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
+           for (var i = 0; i < daily.time.length; i++) {
+            var parts = daily.time[i].split('-');
+            var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            var dayText = (i === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
+            var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
+            var maxT = Math.round(daily.temperature_2m_max[i]);
+            var minT = Math.round(daily.temperature_2m_min[i]);
+            var pop = daily.precipitation_probability_max[i] !== undefined ? daily.precipitation_probability_max[i] : 0;
 
-              rows += '<tr>' +
-                        '<td class="col-day">' + dayText + ' <span style="font-size:11px;color:#555;">' + dateText + '</span></td>' +
-                        '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
-                        '<td class="col-pop">☂ ' + pop + '%</td>' +
-                        '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
-                      '</tr>';
-            }
+            rows += '<tr>' +
+                      '<td class="col-day">' + dayText + ' <span style="font-size:15px;color:#333;font-weight:bold;">' + dateText + '</span></td>' +
+                      '<td class="col-cond">' + getDesc(daily.weather_code[i]) + '</td>' +
+                      '<td class="col-pop">☂ ' + pop + '%</td>' +
+                      '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
+                    '</tr>';
+          }
             document.getElementById('forecast-table').innerHTML = '<tbody>' + rows + '</tbody>';
           } catch (e) {
             document.getElementById('cond').innerHTML = '資料解析失敗';
