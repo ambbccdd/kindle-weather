@@ -73,17 +73,22 @@
 
   <script>
     // 1. 本地時鐘（完全避開 ES6 語法）
-    function setClock() {
-      var d = new Date();
-      var days = ['日', '一', '二', '三', '四', '五', '六'];
-      var h = d.getHours();
-      var m = d.getMinutes();
-      var hStr = (h < 10 ? '0' : '') + h;
-      var mStr = (m < 10 ? '0' : '') + m;
-      document.getElementById('clock').innerHTML = hStr + ':' + mStr;
-      document.getElementById('date').innerHTML = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
-    }
-    setClock();
+function setClock() {
+  // 自動將時間鎖定為 UTC+8 (台灣時區)
+  var now = new Date();
+  var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  var d = new Date(utc + (3600000 * 8));
+
+  var days = ['日', '一', '二', '三', '四', '五', '六'];
+  var h = d.getHours();
+  var m = d.getMinutes();
+  var hStr = (h < 10 ? '0' : '') + h;
+  var mStr = (m < 10 ? '0' : '') + m;
+
+  document.getElementById('clock').innerHTML = hStr + ':' + mStr;
+  document.getElementById('date').innerHTML = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
+}
+setClock();
 
     // 2. 天氣代碼轉換
     function getDesc(code) {
