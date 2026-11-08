@@ -16,7 +16,7 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 18px 10px 4px; /* 頂部留白 */
+      padding: 16px 10px 4px;
     }
     /* 頂部雙欄並排區塊 */
     .top-section {
@@ -83,7 +83,7 @@
     }
     /* 6 小時逐時天氣表格 */
     .hourly-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: bold;
       text-align: left;
       width: 98%;
@@ -102,7 +102,7 @@
       text-align: center;
       padding: 2px 1px;
       border-right: 1px solid #e0e0e0;
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.15;
       vertical-align: top;
     }
@@ -110,51 +110,43 @@
       border-right: none;
     }
     .h-time { font-weight: bold; }
-    .h-temp { font-weight: bold; font-size: 16px; }
-    .h-pop { font-size: 13px; color: #111111; font-weight: 600; }
+    .h-temp { font-weight: bold; font-size: 15px; }
+    .h-pop { font-size: 12px; color: #111111; font-weight: 600; }
 
-    /* 7 天預報列表 */
-    .forecast-title {
-      font-size: 14px;
+    /* 未來一週折線圖容器 */
+    .chart-header {
+      width: 98%;
+      margin: 4px auto 2px;
+      font-size: 13px;
       font-weight: bold;
       text-align: left;
-      width: 98%;
-      margin: 2px auto 1px;
-      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
     }
-    .forecast-table {
+    .chart-legend {
+      font-size: 12px;
+      font-weight: normal;
+    }
+    .chart-container {
       width: 98%;
       margin: 0 auto;
-      border-collapse: collapse;
-      font-size: 17px;
+      border: 1px solid #000000;
+      border-radius: 4px;
+      padding: 4px 0 2px;
+      background: #ffffff;
     }
-    .forecast-table td {
-      padding: 1.5px 2px;
-      border-bottom: 1px solid #dcdcdc;
-      line-height: 1.15;
-    }
-    .col-day { 
-      text-align: left; 
-      width: 30%; 
-      font-weight: bold; 
-      padding-left: 10px !important; 
-    }
-    .col-cond { text-align: center; width: 25%; }
-    .col-pop { text-align: center; width: 20%; color: #111111; font-weight: 600; }
-    .col-temp { 
-      text-align: right; 
-      width: 25%; 
-      font-weight: bold; 
-      padding-right: 10px !important; 
+    svg text {
+      font-family: sans-serif;
+      user-select: none;
     }
 
-    /* 每日正面話語區塊 */
+    /* 每日正面話語區塊（無虛線、留白間距） */
     .quote-box {
       width: 98%;
-      margin: 6px auto 0;
-      padding-top: 4px;
-      border-top: 1px dashed #000000;
-      font-size: 18px;
+      margin: 12px auto 0;
+      padding-top: 6px;
+      border-top: none;
+      font-size: 17px;
       font-weight: bold;
       letter-spacing: 0.5px;
       line-height: 1.3;
@@ -164,7 +156,6 @@
   <meta http-equiv="refresh" content="1800">
 </head>
 <body>
-  <!-- 頂部雙欄並排區塊 -->
   <table class="top-section">
     <tr>
       <td class="top-left">
@@ -190,12 +181,14 @@
     </tbody>
   </table>
 
-  <div class="forecast-title">未來 7 天預報</div>
-  <table class="forecast-table" id="forecast-table">
-    <tbody>
-      <tr><td colspan="4" style="text-align:center;">更新預報中...</td></tr>
-    </tbody>
-  </table>
+  <!-- 未來 7 天折線圖區域 -->
+  <div class="chart-header">
+    <span>未來 7 天氣溫趨勢</span>
+    <span class="chart-legend">── 高溫  ┄┄ 低溫</span>
+  </div>
+  <div class="chart-container" id="chart-wrap">
+    <div style="font-size:13px;padding:20px;">生成線圖中...</div>
+  </div>
 
   <div class="quote-box" id="daily-quote">讀取今日心靈小語...</div>
 
@@ -316,7 +309,6 @@
       document.getElementById('daily-quote').innerHTML = quotes[index];
     }
 
-    // 取得強制 UTC+8 的 Date 物件
     function getTwNow() {
       var now = new Date();
       var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -363,7 +355,6 @@
       return '危害 (' + aqi + ')';
     }
 
-    // 將零散機率四捨五入到 10% 為單位（<5% 歸為 0%）
     function formatPop(val) {
       if (val === undefined || val === null || val < 5) return 0;
       return Math.round(val / 10) * 10;
@@ -398,7 +389,6 @@
     var lat = 24.998;
     var lon = 121.503;
 
-    // 強制指定 Asia/Taipei 時區
     var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi&timezone=Asia%2FTaipei';
     var weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
       '&current=temperature_2m,weather_code' +
@@ -428,6 +418,66 @@
     xhrAqi.ontimeout = function() { loadWeather(); };
     xhrAqi.send();
 
+    function renderWeatherChart(daysData) {
+      var w = 560;
+      var h = 180;
+      var n = daysData.length;
+      var colW = w / n;
+
+      var allTemps = [];
+      for (var i = 0; i < n; i++) {
+        allTemps.push(daysData[i].max);
+        allTemps.push(daysData[i].min);
+      }
+      var maxT = Math.max.apply(null, allTemps);
+      var minT = Math.min.apply(null, allTemps);
+      if (maxT === minT) { maxT += 2; minT -= 2; }
+
+      var chartTop = 48;
+      var chartBottom = 125;
+      var range = chartBottom - chartTop;
+
+      function getY(t) {
+        return Math.round(chartTop + (maxT - t) * (range / (maxT - minT)));
+      }
+
+      var maxPoints = [];
+      var minPoints = [];
+      var labelsSvg = '';
+
+      for (var j = 0; j < n; j++) {
+        var x = Math.round((j + 0.5) * colW);
+        var item = daysData[j];
+        var yMax = getY(item.max);
+        var yMin = getY(item.min);
+
+        maxPoints.push(x + ',' + yMax);
+        minPoints.push(x + ',' + yMin);
+
+        labelsSvg += '<text x="' + x + '" y="16" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">' + item.day + '</text>';
+        labelsSvg += '<text x="' + x + '" y="30" text-anchor="middle" font-size="11" fill="#444">' + item.date + '</text>';
+
+        labelsSvg += '<circle cx="' + x + '" cy="' + yMax + '" r="3.5" fill="#000" />';
+        labelsSvg += '<text x="' + x + '" y="' + (yMax - 6) + '" text-anchor="middle" font-size="13" font-weight="bold" fill="#000">' + item.max + '°</text>';
+
+        labelsSvg += '<circle cx="' + x + '" cy="' + yMin + '" r="3" fill="#fff" stroke="#000" stroke-width="2" />';
+        labelsSvg += '<text x="' + x + '" y="' + (yMin + 15) + '" text-anchor="middle" font-size="13" font-weight="bold" fill="#000">' + item.min + '°</text>';
+
+        labelsSvg += '<text x="' + x + '" y="152" text-anchor="middle" font-size="13" fill="#000">' + item.cond + '</text>';
+        labelsSvg += '<text x="' + x + '" y="170" text-anchor="middle" font-size="12" font-weight="bold" fill="#000">☂ ' + item.pop + '%</text>';
+
+        labelsSvg += '<line x1="' + x + '" y1="36" x2="' + x + '" y2="135" stroke="#efefef" stroke-width="1" />';
+      }
+
+      var svgHtml = '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block;">' +
+        labelsSvg +
+        '<polyline fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' + maxPoints.join(' ') + '" />' +
+        '<polyline fill="none" stroke="#000000" stroke-width="2" stroke-dasharray="4,4" stroke-linecap="round" stroke-linejoin="round" points="' + minPoints.join(' ') + '" />' +
+      '</svg>';
+
+      document.getElementById('chart-wrap').innerHTML = svgHtml;
+    }
+
     function loadWeather() {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', weatherUrl, true);
@@ -444,7 +494,6 @@
             var curTemp = Math.round(cur.temperature_2m);
             var curCode = cur.weather_code;
 
-            // 1. 計算當前台灣標準時間格式：YYYY-MM-DDTHH:00
             var twNow = getTwNow();
             var y = twNow.getFullYear();
             var m = twNow.getMonth() + 1;
@@ -455,7 +504,6 @@
             var currentTargetPrefix = y + '-' + pad(m) + '-' + pad(d) + 'T' + pad(h);
             var todayDateStr = y + '-' + pad(m) + '-' + pad(d);
 
-            // 2. 精確找出目前整點在 hourly 中的位置
             var startIndex = -1;
             for (var k = 0; k < hourly.time.length; k++) {
               if (hourly.time[k].indexOf(currentTargetPrefix) === 0) {
@@ -463,11 +511,8 @@
                 break;
               }
             }
-            if (startIndex === -1) {
-              startIndex = 0;
-            }
+            if (startIndex === -1) { startIndex = 0; }
 
-            // 3. 取得當前整點的降雨機率（整數化）
             var rawCurrentPop = (hourly.precipitation_probability && hourly.precipitation_probability[startIndex] !== undefined)
                                 ? hourly.precipitation_probability[startIndex] : 0;
             var currentPop = formatPop(rawCurrentPop);
@@ -500,9 +545,9 @@
             }
             document.getElementById('hourly-table').innerHTML = '<tbody><tr>' + hourlyCells + '</tr></tbody>';
 
-            // B. 未來 7 天預報列表（以今天日期為準對齊）
+            // B. 未來 7 天折線圖
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-            var rows = '';
+            var chartList = [];
 
             var dailyStart = 0;
             for (var dIdx = 0; dIdx < daily.time.length; dIdx++) {
@@ -523,17 +568,19 @@
                 var minT = Math.round(daily.temperature_2m_min[actualDayIdx]);
                 var rawDayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[actualDayIdx] !== undefined)
                                 ? daily.precipitation_probability_max[actualDayIdx] : 0;
-                var pop = formatPop(rawDayPop);
 
-                rows += '<tr>' +
-                          '<td class="col-day">' + dayText + ' <span style="font-size:15px;color:#333;font-weight:bold;">' + dateText + '</span></td>' +
-                          '<td class="col-cond">' + getDesc(daily.weather_code[actualDayIdx]) + '</td>' +
-                          '<td class="col-pop">☂ ' + pop + '%</td>' +
-                          '<td class="col-temp">' + minT + '°~' + maxT + '°</td>' +
-                        '</tr>';
+                chartList.push({
+                  day: dayText,
+                  date: dateText,
+                  cond: getDesc(daily.weather_code[actualDayIdx]),
+                  max: maxT,
+                  min: minT,
+                  pop: formatPop(rawDayPop)
+                });
               }
             }
-            document.getElementById('forecast-table').innerHTML = '<tbody>' + rows + '</tbody>';
+            renderWeatherChart(chartList);
+
           } catch (e) {
             document.getElementById('cond').innerHTML = '資料解析失敗';
           }
