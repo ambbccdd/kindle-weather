@@ -16,7 +16,7 @@
       font-family: sans-serif;
       text-align: center;
       margin: 0;
-      padding: 12px 10px 4px; /* 微調內距保持無捲軸 */
+      padding: 12px 10px 4px;
     }
 
     /* 頂部三欄表格：左邊資訊、中間置中時鐘、右邊穿衣建議 */
@@ -76,11 +76,12 @@
       letter-spacing: 0.5px;
       margin-bottom: 5px;
     }
+    /* 加大 °C 與後方文字的水平距離 */
     .hero-temp-row {
       display: flex;
       justify-content: center;
       align-items: baseline;
-      gap: 8px;
+      gap: 20px; /* 從 8px 加大至 20px，保持充裕間距 */
     }
     .hero-temp {
       font-size: 84px;
@@ -91,6 +92,8 @@
     .hero-cond {
       font-size: 24px;
       font-weight: bold;
+      letter-spacing: 1px;
+      margin-left: 4px;
     }
 
     /* 右側穿搭建議加大方框 */
@@ -172,7 +175,7 @@
         <div class="side-meta" id="meta-aqi">空品：讀取中...</div>
       </td>
 
-      <!-- 中欄：時間與即時溫度置中 -->
+      <!-- 中欄：時間與即時溫度置中（加大間隙） -->
       <td class="hero-center">
         <div class="hero-time" id="clock">--:--</div>
         <div class="hero-date" id="date">載入中...</div>
@@ -433,7 +436,7 @@
     // 純 SVG 動態折線圖（上下留出充足安全緩衝區，杜絕碰字）
     function renderWeatherChart(daysData) {
       var w = 560;
-      var h = 240; // 畫布加高，保證上下文字與線路完全隔離
+      var h = 240;
       var n = daysData.length;
       var colW = w / n;
 
@@ -446,7 +449,6 @@
       var minT = Math.min.apply(null, allTemps);
       if (maxT === minT) { maxT += 2; minT -= 2; }
 
-      // 嚴格鎖定波峰波谷：最高不超過 68，最低不超過 140
       var chartTop = 68;
       var chartBottom = 140;
       var range = chartBottom - chartTop;
@@ -468,19 +470,19 @@
         maxPoints.push(x + ',' + yMax);
         minPoints.push(x + ',' + yMin);
 
-        // 頂部星期與加大日期（y=18, y=34）
+        // 頂部星期與加大日期
         labelsSvg += '<text x="' + x + '" y="18" text-anchor="middle" font-size="15" font-weight="bold" fill="#000">' + item.day + '</text>';
         labelsSvg += '<text x="' + x + '" y="34" text-anchor="middle" font-size="13" font-weight="bold" fill="#222">' + item.date + '</text>';
 
-        // 高溫標註點與度數（距頂部日期有 25px 以上空間）
+        // 高溫標註點與度數
         labelsSvg += '<circle cx="' + x + '" cy="' + yMax + '" r="4" fill="#000" />';
         labelsSvg += '<text x="' + x + '" y="' + (yMax - 7) + '" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">' + item.max + '°</text>';
 
-        // 低溫標註點與度數（最大 y 約 154）
+        // 低溫標註點與度數
         labelsSvg += '<circle cx="' + x + '" cy="' + yMin + '" r="3.5" fill="#fff" stroke="#000" stroke-width="2" />';
         labelsSvg += '<text x="' + x + '" y="' + (yMin + 15) + '" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">' + item.min + '°</text>';
 
-        // 底部天氣現象與大字降雨機率（y=186 與 y=210，與低溫相隔 30px 以上安全距離）
+        // 底部天氣現象與大字降雨機率
         labelsSvg += '<text x="' + x + '" y="186" text-anchor="middle" font-size="14" fill="#000">' + item.cond + '</text>';
         labelsSvg += '<text x="' + x + '" y="210" text-anchor="middle" font-size="14" font-weight="bold" fill="#000">☂ ' + item.pop + '%</text>';
       }
