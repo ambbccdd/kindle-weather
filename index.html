@@ -189,7 +189,7 @@
     <span class="chart-legend">── 高溫  ┄┄ 低溫</span>
   </div>
   <div class="chart-container" id="chart-wrap">
-    <div style="font-size:16px;padding:30px;">生成線圖中...</div>
+    <div style="font-size:16px;padding:30px;">讀取氣象中...</div>
   </div>
 
   <div class="quote-box" id="daily-quote">讀取今日心靈小語...</div>
@@ -362,7 +362,6 @@
       return Math.round(val / 10) * 10;
     }
 
-    // 狀態集中管理，任一 API 回傳立即更新穿搭建議
     var state = {
       temp: null,
       pop: 0,
@@ -398,35 +397,14 @@
     var lat = 24.998;
     var lon = 121.503;
 
-    // 精簡參數並限制只抓 7 天，大幅縮小 JSON 體積加快 Kindle 解析
-    var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi&timezone=Asia%2FTaipei';
+    // 1. 空氣品質 API
+    var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi';
+
+    // 2. 極簡天氣 API（移除龐大的 hourly 陣列，直接用 current 抓即時降雨機率，資料量縮減 90%）
     var weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
-      '&current=temperature_2m,weather_code' +
-      '&hourly=precipitation_probability' +
+      '&current=temperature_2m,weather_code,precipitation_probability' +
       '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
       '&forecast_days=7&timezone=Asia%2FTaipei';
-
-    // 1. 平行發送：空品請求（獨立運行，不卡住天氣）
-    function loadAqi() {
-      var xhrAqi = new XMLHttpRequest();
-      xhrAqi.open('GET', aqiUrl, true);
-      xhrAqi.timeout = 8000;
-      xhrAqi.onload = function() {
-        if (xhrAqi.status >= 200 && xhrAqi.status < 300) {
-          try {
-            var aqiData = JSON.parse(xhrAqi.responseText);
-            state.aqi = Math.round(aqiData.current.us_aqi);
-            document.getElementById('meta-aqi').innerHTML = '空品：' + getAqiInfo(state.aqi);
-            refreshClothingTip();
-          } catch (e) {
-            document.getElementById('meta-aqi').innerHTML = '空品：資料異常';
-          }
-        }
-      };
-      xhrAqi.onerror = function() { document.getElementById('meta-aqi').innerHTML = '空品：連線失敗'; };
-      xhrAqi.ontimeout = function() { document.getElementById('meta-aqi').innerHTML = '空品：逾時'; };
-      xhrAqi.send();
-    }
 
     function renderWeatherChart(daysData) {
       var w = 560;
@@ -486,106 +464,107 @@
       document.getElementById('chart-wrap').innerHTML = svgHtml;
     }
 
-    // 2. 平行發送：天氣與折線圖請求（立刻執行，不需等待空品）
+    function applyWeatherData(data) {
+      var cur = data.current;
+      var daily = data.daily;
+
+      state.temp = Math.round(cur.temperature_2m);
+      var curCode = cur.weather_code;
+      state.pop = formatPop(cur.precipitation_probability);
+
+      document.getElementById('loc-title').innerHTML = '中和區';
+      document.getElementById('meta-pop').innerHTML = '降雨：' + state.pop + '%';
+      document.getElementById('temp').innerHTML = state.temp + '°C';
+      document.getElementById('cond').innerHTML = getDesc(curCode);
+      refreshClothingTip();
+
+      var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+      var chartList = [];
+
+      var count = Math.min(7, daily.time.length);
+      for (var j = 0; j < count; j++) {
+        var parts = daily.time[j].split('-');
+        var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        var dayText = (j === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
+        var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
+        var maxT = Math.round(daily.temperature_2m_max[j]);
+        var minT = Math.round(daily.temperature_2m_min[j]);
+        var rawDayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[j] !== undefined)
+                        ? daily.precipitation_probability_max[j] : 0;
+
+        chartList.push({
+          day: dayText,
+          date: dateText,
+          cond: getDesc(daily.weather_code[j]),
+          max: maxT,
+          min: minT,
+          pop: formatPop(rawDayPop)
+        });
+      }
+      renderWeatherChart(chartList);
+    }
+
+    // 先讀取本地快取（如有），讓畫面秒開不空白
+    try {
+      var cachedWeather = localStorage.getItem('kindle_weather_cache');
+      if (cachedWeather) {
+        applyWeatherData(JSON.parse(cachedWeather));
+      }
+    } catch (e) {}
+
+    function loadAqi() {
+      var xhrAqi = new XMLHttpRequest();
+      xhrAqi.open('GET', aqiUrl, true);
+      xhrAqi.timeout = 12000;
+      xhrAqi.onload = function() {
+        if (xhrAqi.status >= 200 && xhrAqi.status < 300) {
+          try {
+            var aqiData = JSON.parse(xhrAqi.responseText);
+            state.aqi = Math.round(aqiData.current.us_aqi);
+            document.getElementById('meta-aqi').innerHTML = '空品：' + getAqiInfo(state.aqi);
+            refreshClothingTip();
+          } catch (e) {
+            document.getElementById('meta-aqi').innerHTML = '空品：解析錯';
+          }
+        }
+      };
+      xhrAqi.onerror = function() { document.getElementById('meta-aqi').innerHTML = '空品：斷線'; };
+      xhrAqi.ontimeout = function() { document.getElementById('meta-aqi').innerHTML = '空品：逾時'; };
+      xhrAqi.send();
+    }
+
     function loadWeather() {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', weatherUrl, true);
-      xhr.timeout = 10000;
+      xhr.timeout = 15000;
 
       xhr.onload = function() {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             var data = JSON.parse(xhr.responseText);
-            var cur = data.current;
-            var hourly = data.hourly;
-            var daily = data.daily;
-
-            state.temp = Math.round(cur.temperature_2m);
-            var curCode = cur.weather_code;
-
-            var twNow = getTwNow();
-            var y = twNow.getFullYear();
-            var m = twNow.getMonth() + 1;
-            var d = twNow.getDate();
-            var h = twNow.getHours();
-
-            var pad = function(num) { return (num < 10 ? '0' : '') + num; };
-            var currentTargetPrefix = y + '-' + pad(m) + '-' + pad(d) + 'T' + pad(h);
-            var todayDateStr = y + '-' + pad(m) + '-' + pad(d);
-
-            var startIndex = 0;
-            for (var k = 0; k < hourly.time.length; k++) {
-              if (hourly.time[k].indexOf(currentTargetPrefix) === 0) {
-                startIndex = k;
-                break;
-              }
-            }
-
-            var rawCurrentPop = (hourly.precipitation_probability && hourly.precipitation_probability[startIndex] !== undefined)
-                                ? hourly.precipitation_probability[startIndex] : 0;
-            state.pop = formatPop(rawCurrentPop);
-
-            document.getElementById('loc-title').innerHTML = '中和區';
-            document.getElementById('meta-pop').innerHTML = '降雨：' + state.pop + '%';
-            document.getElementById('temp').innerHTML = state.temp + '°C';
-            document.getElementById('cond').innerHTML = getDesc(curCode);
-            refreshClothingTip();
-
-            var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-            var chartList = [];
-
-            var dailyStart = 0;
-            for (var dIdx = 0; dIdx < daily.time.length; dIdx++) {
-              if (daily.time[dIdx] === todayDateStr) {
-                dailyStart = dIdx;
-                break;
-              }
-            }
-
-            for (var j = 0; j < 7; j++) {
-              var actualDayIdx = dailyStart + j;
-              if (actualDayIdx < daily.time.length) {
-                var parts = daily.time[actualDayIdx].split('-');
-                var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-                var dayText = (j === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
-                var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
-                var maxT = Math.round(daily.temperature_2m_max[actualDayIdx]);
-                var minT = Math.round(daily.temperature_2m_min[actualDayIdx]);
-                var rawDayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[actualDayIdx] !== undefined)
-                                ? daily.precipitation_probability_max[actualDayIdx] : 0;
-
-                chartList.push({
-                  day: dayText,
-                  date: dateText,
-                  cond: getDesc(daily.weather_code[actualDayIdx]),
-                  max: maxT,
-                  min: minT,
-                  pop: formatPop(rawDayPop)
-                });
-              }
-            }
-            renderWeatherChart(chartList);
-
+            applyWeatherData(data);
+            try {
+              localStorage.setItem('kindle_weather_cache', xhr.responseText);
+            } catch (e) {}
           } catch (e) {
-            document.getElementById('cond').innerHTML = '解析失敗';
+            document.getElementById('cond').innerHTML = '格式錯';
           }
         } else {
-          document.getElementById('cond').innerHTML = '異常 ' + xhr.status;
+          document.getElementById('cond').innerHTML = 'HTTP:' + xhr.status;
         }
       };
 
       xhr.onerror = function() {
-        document.getElementById('cond').innerHTML = '連線失敗';
+        document.getElementById('cond').innerHTML = '阻擋/斷線';
       };
 
       xhr.ontimeout = function() {
-        document.getElementById('cond').innerHTML = '逾時';
+        document.getElementById('cond').innerHTML = '連線逾時';
       };
 
       xhr.send();
     }
 
-    // 同時發送兩個請求
     loadWeather();
     loadAqi();
   </script>
