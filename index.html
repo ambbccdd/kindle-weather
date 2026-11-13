@@ -8,7 +8,7 @@
     * { box-sizing: border-box; }
     html, body {
       height: 100%;
-      overflow: hidden; /* 徹底消除滾動條 */
+      overflow: hidden;
     }
     body {
       background-color: #ffffff;
@@ -19,7 +19,6 @@
       padding: 8px 6px 4px;
     }
 
-    /* 頂部三欄表格：移除兩側虛線，以純留白區隔 */
     .hero-table {
       width: 99%;
       margin: 0 auto;
@@ -31,7 +30,7 @@
       vertical-align: middle;
       text-align: left;
       padding-right: 8px;
-      border-right: none; /* 移除左側虛線 */
+      border-right: none;
     }
     .hero-center {
       width: 50%;
@@ -44,10 +43,9 @@
       vertical-align: middle;
       text-align: center;
       padding-left: 8px;
-      border-left: none; /* 移除右側虛線 */
+      border-left: none;
     }
 
-    /* 左側資訊特大字體 */
     .side-location {
       font-size: 24px;
       font-weight: bold;
@@ -62,7 +60,6 @@
       color: #111111;
     }
 
-    /* 中間超大時間與溫度 */
     .hero-time {
       font-size: 108px;
       font-weight: bold;
@@ -95,7 +92,6 @@
       margin-left: 4px;
     }
 
-    /* 右側穿搭建議方框 */
     .tips-title {
       font-size: 16px;
       font-weight: bold;
@@ -121,7 +117,6 @@
       width: 99%;
     }
 
-    /* 未來一週折線圖容器 */
     .chart-header {
       width: 99%;
       margin: 0 auto 2px;
@@ -148,7 +143,6 @@
       user-select: none;
     }
 
-    /* 每日正面小語 */
     .quote-box {
       width: 99%;
       margin: 7px auto 0;
@@ -164,17 +158,14 @@
   <meta http-equiv="refresh" content="1800">
 </head>
 <body>
-  <!-- 頂部三欄平衡佈局（無虛線） -->
   <table class="hero-table">
     <tr>
-      <!-- 左欄：地點與環境數值 -->
       <td class="hero-side-left">
         <div class="side-location" id="loc-title">中和區</div>
         <div class="side-meta" id="meta-pop">降雨：--%</div>
         <div class="side-meta" id="meta-aqi">空品：讀取中...</div>
       </td>
 
-      <!-- 中欄：時間與溫度置中 -->
       <td class="hero-center">
         <div class="hero-time" id="clock">--:--</div>
         <div class="hero-date" id="date">載入中...</div>
@@ -184,7 +175,6 @@
         </div>
       </td>
 
-      <!-- 右欄：穿衣建議獨立寬敞大字 -->
       <td class="hero-side-right">
         <div class="tips-title">今日穿搭建議</div>
         <div class="tips-box" id="tips">載入中...</div>
@@ -194,7 +184,6 @@
 
   <hr>
 
-  <!-- 未來 7 天氣溫趨勢線圖 -->
   <div class="chart-header">
     <span>未來 7 天氣溫趨勢</span>
     <span class="chart-legend">── 高溫  ┄┄ 低溫</span>
@@ -203,7 +192,6 @@
     <div style="font-size:16px;padding:30px;">生成線圖中...</div>
   </div>
 
-  <!-- 每日正面小語 -->
   <div class="quote-box" id="daily-quote">讀取今日心靈小語...</div>
 
   <script>
@@ -374,63 +362,71 @@
       return Math.round(val / 10) * 10;
     }
 
-    function getClothingTip(temp, pop, aqi) {
+    // 狀態集中管理，任一 API 回傳立即更新穿搭建議
+    var state = {
+      temp: null,
+      pop: 0,
+      aqi: 0
+    };
+
+    function refreshClothingTip() {
+      if (state.temp === null) return;
       var tip = '';
-      if (temp >= 28) {
+      if (state.temp >= 28) {
         tip = '短袖涼爽';
-      } else if (temp >= 24) {
+      } else if (state.temp >= 24) {
         tip = '短袖/薄長袖';
-      } else if (temp >= 20) {
+      } else if (state.temp >= 20) {
         tip = '薄外套/長袖';
-      } else if (temp >= 16) {
+      } else if (state.temp >= 16) {
         tip = '夾克/針織衫';
-      } else if (temp >= 12) {
+      } else if (state.temp >= 12) {
         tip = '厚外套/毛衣';
       } else {
         tip = '羽絨保暖';
       }
 
-      if (pop >= 30) {
+      if (state.pop >= 30) {
         tip += '<br>出門備傘 ☂';
       }
-      if (aqi > 100) {
+      if (state.aqi > 100) {
         tip += '<br>建議戴口罩';
       }
-
-      return tip;
+      document.getElementById('tips').innerHTML = tip;
     }
 
     var lat = 24.998;
     var lon = 121.503;
 
+    // 精簡參數並限制只抓 7 天，大幅縮小 JSON 體積加快 Kindle 解析
     var aqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi&timezone=Asia%2FTaipei';
     var weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
       '&current=temperature_2m,weather_code' +
-      '&hourly=temperature_2m,precipitation_probability' +
+      '&hourly=precipitation_probability' +
       '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
-      '&timezone=Asia%2FTaipei';
+      '&forecast_days=7&timezone=Asia%2FTaipei';
 
-    var currentAqi = 0;
-    var aqiText = '讀取中...';
-
-    var xhrAqi = new XMLHttpRequest();
-    xhrAqi.open('GET', aqiUrl, true);
-    xhrAqi.timeout = 8000;
-    xhrAqi.onload = function() {
-      if (xhrAqi.status >= 200 && xhrAqi.status < 300) {
-        try {
-          var aqiData = JSON.parse(xhrAqi.responseText);
-          currentAqi = Math.round(aqiData.current.us_aqi);
-          aqiText = getAqiInfo(currentAqi);
-        } catch (e) {
-          aqiText = '資料異常';
+    // 1. 平行發送：空品請求（獨立運行，不卡住天氣）
+    function loadAqi() {
+      var xhrAqi = new XMLHttpRequest();
+      xhrAqi.open('GET', aqiUrl, true);
+      xhrAqi.timeout = 8000;
+      xhrAqi.onload = function() {
+        if (xhrAqi.status >= 200 && xhrAqi.status < 300) {
+          try {
+            var aqiData = JSON.parse(xhrAqi.responseText);
+            state.aqi = Math.round(aqiData.current.us_aqi);
+            document.getElementById('meta-aqi').innerHTML = '空品：' + getAqiInfo(state.aqi);
+            refreshClothingTip();
+          } catch (e) {
+            document.getElementById('meta-aqi').innerHTML = '空品：資料異常';
+          }
         }
-      }
-      loadWeather();
-    };
-    xhrAqi.onerror = function() { loadWeather(); };
-    xhrAqi.ontimeout = function() { loadWeather(); };
-    xhrAqi.send();
+      };
+      xhrAqi.onerror = function() { document.getElementById('meta-aqi').innerHTML = '空品：連線失敗'; };
+      xhrAqi.ontimeout = function() { document.getElementById('meta-aqi').innerHTML = '空品：逾時'; };
+      xhrAqi.send();
+    }
 
     function renderWeatherChart(daysData) {
       var w = 560;
@@ -468,19 +464,15 @@
         maxPoints.push(x + ',' + yMax);
         minPoints.push(x + ',' + yMin);
 
-        // 頂部星期與加大日期
         labelsSvg += '<text x="' + x + '" y="20" text-anchor="middle" font-size="18" font-weight="bold" fill="#000">' + item.day + '</text>';
         labelsSvg += '<text x="' + x + '" y="38" text-anchor="middle" font-size="15" font-weight="bold" fill="#222">' + item.date + '</text>';
 
-        // 高溫標註點與度數
         labelsSvg += '<circle cx="' + x + '" cy="' + yMax + '" r="5" fill="#000" />';
         labelsSvg += '<text x="' + x + '" y="' + (yMax - 9) + '" text-anchor="middle" font-size="17" font-weight="bold" fill="#000">' + item.max + '°</text>';
 
-        // 低溫標註點與度數（拉開間隔）
         labelsSvg += '<circle cx="' + x + '" cy="' + yMin + '" r="4.5" fill="#fff" stroke="#000" stroke-width="2.5" />';
         labelsSvg += '<text x="' + x + '" y="' + (yMin + 22) + '" text-anchor="middle" font-size="17" font-weight="bold" fill="#000">' + item.min + '°</text>';
 
-        // 底部天氣現象與降雨機率
         labelsSvg += '<text x="' + x + '" y="205" text-anchor="middle" font-size="17" font-weight="bold" fill="#000">' + item.cond + '</text>';
         labelsSvg += '<text x="' + x + '" y="233" text-anchor="middle" font-size="17" font-weight="bold" fill="#000">☂ ' + item.pop + '%</text>';
       }
@@ -494,6 +486,7 @@
       document.getElementById('chart-wrap').innerHTML = svgHtml;
     }
 
+    // 2. 平行發送：天氣與折線圖請求（立刻執行，不需等待空品）
     function loadWeather() {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', weatherUrl, true);
@@ -507,7 +500,7 @@
             var hourly = data.hourly;
             var daily = data.daily;
 
-            var curTemp = Math.round(cur.temperature_2m);
+            state.temp = Math.round(cur.temperature_2m);
             var curCode = cur.weather_code;
 
             var twNow = getTwNow();
@@ -520,32 +513,24 @@
             var currentTargetPrefix = y + '-' + pad(m) + '-' + pad(d) + 'T' + pad(h);
             var todayDateStr = y + '-' + pad(m) + '-' + pad(d);
 
-            var startIndex = -1;
+            var startIndex = 0;
             for (var k = 0; k < hourly.time.length; k++) {
               if (hourly.time[k].indexOf(currentTargetPrefix) === 0) {
                 startIndex = k;
                 break;
               }
             }
-            if (startIndex === -1) { startIndex = 0; }
 
             var rawCurrentPop = (hourly.precipitation_probability && hourly.precipitation_probability[startIndex] !== undefined)
                                 ? hourly.precipitation_probability[startIndex] : 0;
-            var currentPop = formatPop(rawCurrentPop);
+            state.pop = formatPop(rawCurrentPop);
 
-            // 1. 左欄：地點與環境數值
             document.getElementById('loc-title').innerHTML = '中和區';
-            document.getElementById('meta-pop').innerHTML = '降雨：' + currentPop + '%';
-            document.getElementById('meta-aqi').innerHTML = '空品：' + aqiText;
-
-            // 2. 中欄：時間與溫度置中
-            document.getElementById('temp').innerHTML = curTemp + '°C';
+            document.getElementById('meta-pop').innerHTML = '降雨：' + state.pop + '%';
+            document.getElementById('temp').innerHTML = state.temp + '°C';
             document.getElementById('cond').innerHTML = getDesc(curCode);
+            refreshClothingTip();
 
-            // 3. 右欄：穿衣建議
-            document.getElementById('tips').innerHTML = getClothingTip(curTemp, currentPop, currentAqi);
-
-            // 4. 繪製未來 7 天折線圖
             var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             var chartList = [];
 
@@ -599,6 +584,10 @@
 
       xhr.send();
     }
+
+    // 同時發送兩個請求
+    loadWeather();
+    loadAqi();
   </script>
 </body>
 </html>
