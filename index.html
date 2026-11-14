@@ -30,7 +30,6 @@
       vertical-align: middle;
       text-align: left;
       padding-right: 8px;
-      border-right: none;
     }
     .hero-center {
       width: 50%;
@@ -43,7 +42,6 @@
       vertical-align: middle;
       text-align: center;
       padding-left: 8px;
-      border-left: none;
     }
 
     .side-location {
@@ -147,7 +145,6 @@
       width: 99%;
       margin: 7px auto 0;
       padding-top: 2px;
-      border-top: none;
       font-size: 20px;
       font-weight: bold;
       letter-spacing: 0.5px;
@@ -163,7 +160,7 @@
       <td class="hero-side-left">
         <div class="side-location" id="loc-title">中和區</div>
         <div class="side-meta" id="meta-pop">降雨：--%</div>
-        <div class="side-meta" id="meta-aqi">空品：讀取中...</div>
+        <div class="side-meta" id="meta-aqi">空品：--</div>
       </td>
 
       <td class="hero-center">
@@ -171,7 +168,7 @@
         <div class="hero-date" id="date">載入中...</div>
         <div class="hero-temp-row">
           <span class="hero-temp" id="temp">--°C</span>
-          <span class="hero-cond" id="cond">連線中</span>
+          <span class="hero-cond" id="cond">讀取中</span>
         </div>
       </td>
 
@@ -185,11 +182,11 @@
   <hr>
 
   <div class="chart-header">
-    <span>未來氣溫趨勢</span>
+    <span>未來 7 天氣溫趨勢</span>
     <span class="chart-legend">── 高溫  ┄┄ 低溫</span>
   </div>
   <div class="chart-container" id="chart-wrap">
-    <div style="font-size:16px;padding:30px;">讀取氣象中...</div>
+    <div style="font-size:16px;padding:30px;">讀取資料中...</div>
   </div>
 
   <div class="quote-box" id="daily-quote">讀取今日心靈小語...</div>
@@ -302,11 +299,9 @@
       var y = twDate.getFullYear();
       var m = twDate.getMonth() + 1;
       var d = twDate.getDate();
-
       var start = new Date(2026, 0, 1);
       var current = new Date(y, m - 1, d);
       var diffDays = Math.floor((current - start) / (1000 * 60 * 60 * 24));
-
       var index = Math.abs(diffDays * 37) % quotes.length;
       document.getElementById('daily-quote').innerHTML = quotes[index];
     }
@@ -317,15 +312,7 @@
       return new Date(utc + (3600000 * 8));
     }
 
-    function getTodayDateStr() {
-      var d = getTwNow();
-      var m = d.getMonth() + 1;
-      var day = d.getDate();
-      return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (day < 10 ? '0' + day : day);
-    }
-
     var lastMinute = -1;
-    var lastLoadedDate = getTodayDateStr();
 
     function setClock() {
       var d = getTwNow();
@@ -333,7 +320,6 @@
 
       if (m !== lastMinute) {
         lastMinute = m;
-
         var days = ['日', '一', '二', '三', '四', '五', '六'];
         var h = d.getHours();
         var hStr = (h < 10 ? '0' : '') + h;
@@ -342,84 +328,44 @@
         document.getElementById('clock').innerHTML = hStr + ':' + mStr;
         document.getElementById('date').innerHTML = (d.getMonth() + 1) + '月' + d.getDate() + '日 (週' + days[d.getDay()] + ')';
         updateDailyQuote(d);
-
-        var currentToday = getTodayDateStr();
-        if (currentToday !== lastLoadedDate) {
-          lastLoadedDate = currentToday;
-          startWeatherFetch();
-          loadAqi(0);
-        }
       }
     }
 
     setClock();
     setInterval(setClock, 10000);
 
-    function getDesc(code) {
-      if (code === 0) return '晴朗';
-      if (code <= 3) return '多雲';
-      if (code >= 51 && code <= 67) return '降雨';
-      if (code >= 80 && code <= 82) return '短暫雨';
-      if (code >= 95) return '雷雨';
-      return '陰天';
+    function simplifyWx(wx) {
+      if (!wx) return '多雲';
+      if (wx.indexOf('雷') !== -1) return '雷雨';
+      if (wx.indexOf('雨') !== -1) return '降雨';
+      if (wx.indexOf('晴') !== -1 && wx.indexOf('雲') !== -1) return '晴時多雲';
+      if (wx.indexOf('晴') !== -1) return '晴朗';
+      if (wx.indexOf('陰') !== -1) return '陰天';
+      return '多雲';
     }
 
     function getAqiInfo(aqi) {
+      if (aqi <= 0) return '讀取中';
       if (aqi <= 50) return '良好 (' + aqi + ')';
       if (aqi <= 100) return '普通 (' + aqi + ')';
-      if (aqi <= 150) return '敏感不健康 (' + aqi + ')';
+      if (aqi <= 150) return '敏感 (' + aqi + ')';
       if (aqi <= 200) return '不健康 (' + aqi + ')';
       return '危害 (' + aqi + ')';
     }
 
-    function formatPop(val) {
-      if (val === undefined || val === null || val < 5) return 0;
-      return Math.round(val / 10) * 10;
-    }
-
-    var state = {
-      temp: null,
-      pop: 0,
-      aqi: 0
-    };
-
-    function refreshClothingTip() {
-      if (state.temp === null) return;
+    function getClothingTip(temp, pop, aqi) {
       var tip = '';
-      if (state.temp >= 28) {
-        tip = '短袖涼爽';
-      } else if (state.temp >= 24) {
-        tip = '短袖/薄長袖';
-      } else if (state.temp >= 20) {
-        tip = '薄外套/長袖';
-      } else if (state.temp >= 16) {
-        tip = '夾克/針織衫';
-      } else if (state.temp >= 12) {
-        tip = '厚外套/毛衣';
-      } else {
-        tip = '羽絨保暖';
-      }
+      if (temp >= 28) tip = '短袖涼爽';
+      else if (temp >= 24) tip = '短袖/薄長袖';
+      else if (temp >= 20) tip = '薄外套/長袖';
+      else if (temp >= 16) tip = '夾克/針織衫';
+      else if (temp >= 12) tip = '厚外套/毛衣';
+      else tip = '羽絨保暖';
 
-      if (state.pop >= 30) {
-        tip += '<br>出門備傘 ☂';
-      }
-      if (state.aqi > 100) {
-        tip += '<br>建議戴口罩';
-      }
-      document.getElementById('tips').innerHTML = tip;
+      if (pop >= 30) tip += '<br>出門備傘 ☂';
+      if (aqi > 100) tip += '<br>建議戴口罩';
+      return tip;
     }
-
-    var lat = 24.998;
-    var lon = 121.503;
-
-    var baseAqiUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi';
-    var baseWeatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
-      '&current=temperature_2m,weather_code,precipitation_probability' +
-      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
-      '&forecast_days=7&timezone=Asia%2FTaipei';
-
-    // 備援端點（高相容性，當 Open-Meteo 主站卡死時自動接手）
-    var fallbackWeatherUrl = 'https://wttr.in/24.998,121.503?format=j1';
 
     function renderWeatherChart(daysData) {
       var w = 560;
@@ -466,7 +412,7 @@
         labelsSvg += '<circle cx="' + x + '" cy="' + yMin + '" r="4.5" fill="#fff" stroke="#000" stroke-width="2.5" />';
         labelsSvg += '<text x="' + x + '" y="' + (yMin + 22) + '" text-anchor="middle" font-size="17" font-weight="bold" fill="#000">' + item.min + '°</text>';
 
-        labelsSvg += '<text x="' + x + '" y="205" text-anchor="middle" font-size="17" font-weight="bold" fill="#000">' + item.cond + '</text>';
+        labelsSvg += '<text x="' + x + '" y="205" text-anchor="middle" font-size="16" font-weight="bold" fill="#000">' + simplifyWx(item.wx) + '</text>';
         labelsSvg += '<text x="' + x + '" y="233" text-anchor="middle" font-size="17" font-weight="bold" fill="#000">☂ ' + item.pop + '%</text>';
       }
 
@@ -479,215 +425,48 @@
       document.getElementById('chart-wrap').innerHTML = svgHtml;
     }
 
-    // 標準化資料渲染函式
-    function renderStandardized(curTemp, curCond, curPop, chartList) {
-      state.temp = curTemp;
-      state.pop = curPop;
-
-      document.getElementById('loc-title').innerHTML = '中和區';
-      document.getElementById('meta-pop').innerHTML = '降雨：' + state.pop + '%';
-      document.getElementById('temp').innerHTML = state.temp + '°C';
-      document.getElementById('cond').innerHTML = curCond;
-      refreshClothingTip();
-      renderWeatherChart(chartList);
-    }
-
-    // 解析 Open-Meteo 格式
-    function parseOpenMeteo(data) {
-      var cur = data.current;
-      var daily = data.daily;
-      var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-      var chartList = [];
-
-      var count = Math.min(7, daily.time.length);
-      for (var j = 0; j < count; j++) {
-        var parts = daily.time[j].split('-');
-        var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-        var dayText = (j === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
-        var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
-        var rawDayPop = (daily.precipitation_probability_max && daily.precipitation_probability_max[j] !== undefined)
-                        ? daily.precipitation_probability_max[j] : 0;
-
-        chartList.push({
-          day: dayText,
-          date: dateText,
-          cond: getDesc(daily.weather_code[j]),
-          max: Math.round(daily.temperature_2m_max[j]),
-          min: Math.round(daily.temperature_2m_min[j]),
-          pop: formatPop(rawDayPop)
-        });
-      }
-
-      renderStandardized(
-        Math.round(cur.temperature_2m),
-        getDesc(cur.weather_code),
-        formatPop(cur.precipitation_probability),
-        chartList
-      );
-    }
-
-    // 解析備援來源 wttr.in 格式
-    function parseWttrFallback(data) {
-      var cur = data.current_condition[0];
-      var curTemp = parseInt(cur.temp_C, 10);
-      var wCode = parseInt(cur.weatherCode, 10);
-
-      function mapWttrCode(c) {
-        if (c === 113) return '晴朗';
-        if (c === 116 || c === 119) return '多雲';
-        if (c === 122 || c === 143 || c === 248) return '陰天';
-        if (c >= 386) return '雷雨';
-        if (c >= 176) return '降雨';
-        return '多雲';
-      }
-
-      var curPop = 0;
-      if (data.weather && data.weather[0] && data.weather[0].hourly) {
-        var maxRain = 0;
-        for (var h = 0; h < data.weather[0].hourly.length; h++) {
-          var r = parseInt(data.weather[0].hourly[h].chanceofrain, 10) || 0;
-          if (r > maxRain) maxRain = r;
-        }
-        curPop = formatPop(maxRain);
-      }
-
-      var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-      var chartList = [];
-      var wList = data.weather || [];
-
-      for (var j = 0; j < wList.length; j++) {
-        var item = wList[j];
-        var parts = item.date.split('-');
-        var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-        var dayText = (j === 0) ? '今天' : ('週' + dayNames[dateObj.getDay()]);
-        var dateText = (dateObj.getMonth() + 1) + '/' + dateObj.getDate();
-
-        var maxPop = 0;
-        var midCode = 116;
-        if (item.hourly) {
-          for (var k = 0; k < item.hourly.length; k++) {
-            var p = parseInt(item.hourly[k].chanceofrain, 10) || 0;
-            if (p > maxPop) maxPop = p;
-          }
-          var midIdx = Math.floor(item.hourly.length / 2);
-          midCode = parseInt(item.hourly[midIdx].weatherCode, 10) || 116;
-        }
-
-        chartList.push({
-          day: dayText,
-          date: dateText,
-          cond: mapWttrCode(midCode),
-          max: Math.round(parseFloat(item.maxtempC)),
-          min: Math.round(parseFloat(item.mintempC)),
-          pop: formatPop(maxPop)
-        });
-      }
-
-      renderStandardized(curTemp, mapWttrCode(wCode), curPop, chartList);
-    }
-
-    // 1. 優先嘗試 Open-Meteo（限時 6 秒，避免卡死）
-    function fetchFromOpenMeteo(onFailCallback) {
+    function loadLocalWeatherJson(retryCount) {
+      var attempt = retryCount || 0;
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', baseWeatherUrl + '&_t=' + new Date().getTime(), true);
-      xhr.timeout = 6000;
+      xhr.open('GET', 'weather.json?_t=' + new Date().getTime(), true);
+      xhr.timeout = 8000;
 
       xhr.onload = function() {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             var data = JSON.parse(xhr.responseText);
-            parseOpenMeteo(data);
+            document.getElementById('meta-pop').innerHTML = '降雨：' + data.pop + '%';
+            document.getElementById('meta-aqi').innerHTML = '空品：' + getAqiInfo(data.aqi);
+            document.getElementById('temp').innerHTML = data.temp + '°C';
+            document.getElementById('cond').innerHTML = simplifyWx(data.wx);
+            document.getElementById('tips').innerHTML = getClothingTip(data.temp, data.pop, data.aqi);
+
+            if (data.daily && data.daily.length > 0) {
+              renderWeatherChart(data.daily);
+            }
           } catch (e) {
-            onFailCallback();
+            document.getElementById('cond').innerHTML = '資料格式錯';
           }
         } else {
-          onFailCallback();
+          retryLoad(attempt, 'HTTP:' + xhr.status);
         }
       };
-      xhr.onerror = function() { onFailCallback(); };
-      xhr.ontimeout = function() { onFailCallback(); };
+
+      xhr.onerror = function() { retryLoad(attempt, '重試中'); };
+      xhr.ontimeout = function() { retryLoad(attempt, '重試中'); };
       xhr.send();
     }
 
-    // 2. 備援路線：Open-Meteo 逾時時立刻改連高相容節點
-    function fetchFromFallback(retryCount) {
-      var attempt = retryCount || 0;
-      document.getElementById('cond').innerHTML = '切換備援(' + (attempt + 1) + ')';
-
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', fallbackWeatherUrl + '&_t=' + new Date().getTime(), true);
-      xhr.timeout = 10000;
-
-      xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            var data = JSON.parse(xhr.responseText);
-            parseWttrFallback(data);
-          } catch (e) {
-            retryFallback();
-          }
-        } else {
-          retryFallback();
-        }
-      };
-
-      function retryFallback() {
-        if (attempt < 2) {
-          setTimeout(function() { fetchFromFallback(attempt + 1); }, 3000);
-        } else {
-          document.getElementById('cond').innerHTML = '暫無回應';
-        }
+    function retryLoad(attempt, label) {
+      if (attempt < 3) {
+        document.getElementById('cond').innerHTML = label;
+        setTimeout(function() { loadLocalWeatherJson(attempt + 1); }, 3000);
+      } else {
+        document.getElementById('cond').innerHTML = '請重整';
       }
-
-      xhr.onerror = retryFallback;
-      xhr.ontimeout = retryFallback;
-      xhr.send();
     }
 
-    function startWeatherFetch() {
-      document.getElementById('cond').innerHTML = '連線中';
-      fetchFromOpenMeteo(function() {
-        // 主站逾時或 TLS 卡住時，自動秒切備援通道
-        fetchFromFallback(0);
-      });
-    }
-
-    // 空品抓取（支援重試）
-    function loadAqi(retryCount) {
-      var attempt = retryCount || 0;
-      var xhrAqi = new XMLHttpRequest();
-      xhrAqi.open('GET', baseAqiUrl + '&_t=' + new Date().getTime(), true);
-      xhrAqi.timeout = 10000;
-
-      function scheduleAqiRetry(errLabel) {
-        if (attempt < 3) {
-          setTimeout(function() { loadAqi(attempt + 1); }, 3000);
-        } else {
-          document.getElementById('meta-aqi').innerHTML = '空品：' + errLabel;
-        }
-      }
-
-      xhrAqi.onload = function() {
-        if (xhrAqi.status >= 200 && xhrAqi.status < 300) {
-          try {
-            var aqiData = JSON.parse(xhrAqi.responseText);
-            state.aqi = Math.round(aqiData.current.us_aqi);
-            document.getElementById('meta-aqi').innerHTML = '空品：' + getAqiInfo(state.aqi);
-            refreshClothingTip();
-          } catch (e) {
-            scheduleAqiRetry('解析錯');
-          }
-        } else {
-          scheduleAqiRetry('HTTP:' + xhrAqi.status);
-        }
-      };
-      xhrAqi.onerror = function() { scheduleAqiRetry('斷線'); };
-      xhrAqi.ontimeout = function() { scheduleAqiRetry('逾時'); };
-      xhrAqi.send();
-    }
-
-    startWeatherFetch();
-    loadAqi(0);
+    loadLocalWeatherJson(0);
   </script>
 </body>
 </html>
