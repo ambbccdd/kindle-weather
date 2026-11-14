@@ -2,9 +2,8 @@ name: Update Kindle Weather Data
 
 on:
   schedule:
-    # 每小時的第 5 分鐘自動向台灣氣象署抓取最新資料
     - cron: '5 * * * *'
-  workflow_dispatch: # 允許手動一鍵立即執行
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,42 +13,64 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Fetch CWA Weather & Air Quality
         env:
           CWA_KEY: ${{ secrets.CWA_API_KEY }}
         run: |
-          python3 -c '
-          import urllib.request, urllib.parse, json, os
+          python3 - << 'EOF'
+          import urllib.request, urllib.parse, json, os, ssl
           from datetime import datetime, timezone, timedelta
 
           tw_tz = timezone(timedelta(hours=8))
           now_tw = datetime.now(tw_tz)
-          cwa_key = os.environ["CWA_KEY"].strip()
+          cwa_key = os.environ.get("CWA_KEY", "").strip()
+
+          if not cwa_key:
+              raise RuntimeError("找不到 CWA_API_KEY！請確認已在 Settings > Secrets and variables > Actions 設定名為 CWA_API_KEY 的密鑰。")
+
+          # 建立略過台灣政府中繼憑證驗證的 SSL Context，避免 Ubuntu 連線 CWA 報錯
+          ctx = ssl.create_default_context()
+          ctx.check_hostname = False
+          ctx.verify_mode = ssl.CERT_NONE
 
           def get_json(url):
               req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-              with urllib.request.urlopen(req, timeout=15) as resp:
+              with urllib.request.urlopen(req, timeout=20, context=ctx) as resp:
                   return json.loads(resp.read().decode("utf-8"))
 
           # 1. 抓中和自動測站即時氣溫
           cur_temp = None
           cur_wx = ""
           try:
-              obs_url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization={urllib.parse.quote(cwa_key)}&StationName={urllib.parse.quote(\"中和\")}"
+              q_auth = urllib.parse.quote(cwa_key)
+              q_st = urllib.parse.quote("中和")
+              obs_url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization={q_auth}&StationName={q_st}"
               obs_data = get_json(obs_url)
-              st = obs_data["records"]["Station"][0]["WeatherElement"]
-              t = float(st["AirTemperature"])
-              if t > -50: cur_temp = round(t)
-              if st.get("Weather") and st["Weather"] != "-99": cur_wx = st["Weather"]
+              stations = obs_data.get("records", {}).get("Station", [])
+              if stations:
+                  st = stations[0].get("WeatherElement", {})
+                  t = float(st.get("AirTemperature", -99))
+                  if t > -50:
+                      cur_temp = round(t)
+                  if st.get("Weather") and st["Weather"] != "-99":
+                      cur_wx = st["Weather"]
           except Exception as e:
-              print("Obs error:", e)
+              print("即時測站讀取略過:", e)
 
-          # 2. 抓新北中和區未來 7 天預報
-          fcst_url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-071?Authorization={urllib.parse.quote(cwa_key)}&LocationName={urllib.parse.quote(\"中和區\")}&ElementName={urllib.parse.quote(\"最高溫度,最低溫度,12小時降雨機率,天氣現象\")}"
+          # 2. 抓新北中和區未來 7 天預報 (F-D0047-071)
+          q_auth = urllib.parse.quote(cwa_key)
+          q_loc = urllib.parse.quote("中和區")
+          q_el = urllib.parse.quote("最高溫度,最低溫度,12小時降雨機率,天氣現象")
+          fcst_url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-071?Authorization={q_auth}&LocationName={q_loc}&ElementName={q_el}"
+          
           fcst_data = get_json(fcst_url)
-          elements = fcst_data["records"]["Locations"][0]["Location"][0]["WeatherElement"]
+          if not fcst_data.get("success"):
+              raise RuntimeError(f"氣象署 API 回傳失敗，請檢查授權碼是否正確：{fcst_data}")
+
+          locations = fcst_data["records"]["Locations"][0]["Location"]
+          elements = locations[0]["WeatherElement"]
 
           max_map, min_map, pop_map, wx_map = {}, {}, {}, {}
           for el in elements:
@@ -59,13 +80,18 @@ jobs:
                   val = t_obj["ElementValue"][0]
                   if name == "最高溫度":
                       v = round(float(val["MaxTemperature"]))
-                      if d_key not in max_map or v > max_map[d_key]: max_map[d_key] = v
+                      if d_key not in max_map or v > max_map[d_key]:
+                          max_map[d_key] = v
                   elif name == "最低溫度":
                       v = round(float(val["MinTemperature"]))
-                      if d_key not in min_map or v < min_map[d_key]: min_map[d_key] = v
+                      if d_key not in min_map or v < min_map[d_key]:
+                          min_map[d_key] = v
                   elif name == "12小時降雨機率":
-                      v = int(val["ProbabilityOfPrecipitation"])
-                      if d_key not in pop_map or v > pop_map[d_key]: pop_map[d_key] = v
+                      raw_p = val.get("ProbabilityOfPrecipitation", "")
+                      if str(raw_p).isdigit():
+                          v = int(raw_p)
+                          if d_key not in pop_map or v > pop_map[d_key]:
+                              pop_map[d_key] = v
                   elif name == "天氣現象":
                       if d_key not in wx_map or "06:00:00" in t_obj["StartTime"] or "12:00:00" in t_obj["StartTime"]:
                           wx_map[d_key] = val["Weather"]
@@ -91,7 +117,7 @@ jobs:
               aqi_data = get_json("https://air-quality-api.open-meteo.com/v1/air-quality?latitude=24.998&longitude=121.503&current=us_aqi")
               aqi_val = round(aqi_data["current"]["us_aqi"])
           except Exception as e:
-              print("AQI error:", e)
+              print("空品讀取略過:", e)
 
           if cur_temp is None and daily_list:
               cur_temp = round((daily_list[0]["max"] + daily_list[0]["min"]) / 2)
@@ -106,8 +132,9 @@ jobs:
           }
 
           with open("weather.json", "w", encoding="utf-8") as f:
-              json.dump(output, f, ensure_ascii=False)
-          '
+              json.dump(output, f, ensure_ascii=False, indent=2)
+          print("成功產生 weather.json！更新時間：", output["updated"])
+          EOF
 
       - name: Commit weather.json
         run: |
