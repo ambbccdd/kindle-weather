@@ -1,0 +1,118 @@
+name: Update Kindle Weather Data
+
+on:
+  schedule:
+    # 每小時的第 5 分鐘自動向台灣氣象署抓取最新資料
+    - cron: '5 * * * *'
+  workflow_dispatch: # 允許手動一鍵立即執行
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-weather:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch CWA Weather & Air Quality
+        env:
+          CWA_KEY: ${{ secrets.CWA_API_KEY }}
+        run: |
+          python3 -c '
+          import urllib.request, urllib.parse, json, os
+          from datetime import datetime, timezone, timedelta
+
+          tw_tz = timezone(timedelta(hours=8))
+          now_tw = datetime.now(tw_tz)
+          cwa_key = os.environ["CWA_KEY"].strip()
+
+          def get_json(url):
+              req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  return json.loads(resp.read().decode("utf-8"))
+
+          # 1. 抓中和自動測站即時氣溫
+          cur_temp = None
+          cur_wx = ""
+          try:
+              obs_url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization={urllib.parse.quote(cwa_key)}&StationName={urllib.parse.quote(\"中和\")}"
+              obs_data = get_json(obs_url)
+              st = obs_data["records"]["Station"][0]["WeatherElement"]
+              t = float(st["AirTemperature"])
+              if t > -50: cur_temp = round(t)
+              if st.get("Weather") and st["Weather"] != "-99": cur_wx = st["Weather"]
+          except Exception as e:
+              print("Obs error:", e)
+
+          # 2. 抓新北中和區未來 7 天預報
+          fcst_url = f"https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-071?Authorization={urllib.parse.quote(cwa_key)}&LocationName={urllib.parse.quote(\"中和區\")}&ElementName={urllib.parse.quote(\"最高溫度,最低溫度,12小時降雨機率,天氣現象\")}"
+          fcst_data = get_json(fcst_url)
+          elements = fcst_data["records"]["Locations"][0]["Location"][0]["WeatherElement"]
+
+          max_map, min_map, pop_map, wx_map = {}, {}, {}, {}
+          for el in elements:
+              name = el["ElementName"]
+              for t_obj in el["Time"]:
+                  d_key = t_obj["StartTime"][:10]
+                  val = t_obj["ElementValue"][0]
+                  if name == "最高溫度":
+                      v = round(float(val["MaxTemperature"]))
+                      if d_key not in max_map or v > max_map[d_key]: max_map[d_key] = v
+                  elif name == "最低溫度":
+                      v = round(float(val["MinTemperature"]))
+                      if d_key not in min_map or v < min_map[d_key]: min_map[d_key] = v
+                  elif name == "12小時降雨機率":
+                      v = int(val["ProbabilityOfPrecipitation"])
+                      if d_key not in pop_map or v > pop_map[d_key]: pop_map[d_key] = v
+                  elif name == "天氣現象":
+                      if d_key not in wx_map or "06:00:00" in t_obj["StartTime"] or "12:00:00" in t_obj["StartTime"]:
+                          wx_map[d_key] = val["Weather"]
+
+          day_names = ["一", "二", "三", "四", "五", "六", "日"]
+          daily_list = []
+          for idx, d_key in enumerate(sorted(max_map.keys())[:7]):
+              dt = datetime.strptime(d_key, "%Y-%m-%d")
+              pop_raw = pop_map.get(d_key, 0)
+              pop_fmt = 0 if pop_raw < 5 else round(pop_raw / 10) * 10
+              daily_list.append({
+                  "day": "今天" if idx == 0 else f"週{day_names[dt.weekday()]}",
+                  "date": f"{dt.month}/{dt.day}",
+                  "max": max_map[d_key],
+                  "min": min_map.get(d_key, max_map[d_key]),
+                  "pop": pop_fmt,
+                  "wx": wx_map.get(d_key, "多雲")
+              })
+
+          # 3. 抓空氣品質
+          aqi_val = 0
+          try:
+              aqi_data = get_json("https://air-quality-api.open-meteo.com/v1/air-quality?latitude=24.998&longitude=121.503&current=us_aqi")
+              aqi_val = round(aqi_data["current"]["us_aqi"])
+          except Exception as e:
+              print("AQI error:", e)
+
+          if cur_temp is None and daily_list:
+              cur_temp = round((daily_list[0]["max"] + daily_list[0]["min"]) / 2)
+
+          output = {
+              "updated": now_tw.strftime("%Y-%m-%d %H:%M"),
+              "temp": cur_temp,
+              "wx": cur_wx if cur_wx else (daily_list[0]["wx"] if daily_list else "多雲"),
+              "pop": daily_list[0]["pop"] if daily_list else 0,
+              "aqi": aqi_val,
+              "daily": daily_list
+          }
+
+          with open("weather.json", "w", encoding="utf-8") as f:
+              json.dump(output, f, ensure_ascii=False)
+          '
+
+      - name: Commit weather.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add weather.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update weather data"
+          git push
