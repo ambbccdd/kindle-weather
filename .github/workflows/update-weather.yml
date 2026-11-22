@@ -30,7 +30,6 @@ jobs:
           if not cwa_key:
               raise RuntimeError("找不到 CWA_API_KEY！請確認已在 Settings > Secrets and variables > Actions 設定名為 CWA_API_KEY 的密鑰。")
 
-          # 建立略過台灣政府中繼憑證驗證的 SSL Context，避免 Ubuntu 連線 CWA 報錯
           ctx = ssl.create_default_context()
           ctx.check_hostname = False
           ctx.verify_mode = ssl.CERT_NONE
@@ -121,6 +120,13 @@ jobs:
 
           if cur_temp is None and daily_list:
               cur_temp = round((daily_list[0]["max"] + daily_list[0]["min"]) / 2)
+
+          # 用實測即時溫度校正「今天」的最高與最低溫
+          if cur_temp is not None and daily_list:
+              if cur_temp > daily_list[0]["max"]:
+                  daily_list[0]["max"] = cur_temp
+              if cur_temp < daily_list[0]["min"]:
+                  daily_list[0]["min"] = cur_temp
 
           output = {
               "updated": now_tw.strftime("%Y-%m-%d %H:%M"),
